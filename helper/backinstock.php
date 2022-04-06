@@ -926,12 +926,36 @@ function subscriber_page_smscampain(){
 	
 	
 	?>
-	<hr style="border:2px solid black">
 	
+	<hr style="border:2px solid black">
+	<form action="admin.php?page=all-smscampain&action=all-smscampain" method="POST" for="dogl-names" style=" ">
+	
+ <select name="dogl-names">
+	<option value="">All Customer</option>
+	<option value="wc-processing">processing data</option>
+	<option value="wc-on-hold">on-hold data</option>
+	<option value="wc-cancelled">Cancelled data</option>
+	<option value="wc-complete">Completed data</option>
+	
+	
+	</select> 
+	
+<input type="submit" name="submit" value="Search data">
 
 			
 
-</form>
+</form><br>
+<div>
+<select name="dogl-names">
+	<option value="dogl-names">slect templates</option>
+	<option value=" ">aslike</option>	
+</select> <br>
+<label for="comment">
+ Type your message here...
+</label><br>
+<textarea name="message" id="message"
+placeholder="Enter your message here">
+</textarea></div>
 <?php
        if(!empty($_REQUEST['action']) && $_REQUEST['action']=='all-smscampain')
 	{
@@ -972,7 +996,8 @@ function subscriber_page_smscampain(){
 
 		$cred = ($credits['description']['routes']);
 		?>
-		<select >
+		<div>
+		<br><select >
 			<?php
 		foreach($cred as $key => $creditroot){
         $creditrout = $creditroot['route'];
@@ -985,48 +1010,41 @@ function subscriber_page_smscampain(){
 		?>
 		
 	</select>
-	
+	</div>
 	<?php
 
 		?>
-		<select >
+		<div>
+		<br><select >
 			<?php
 		foreach($senderids as $key => $senderid){
 			$boards= $senderid['Senderid']['sender'] ;
 			?>
 			
-			<option value="<?php  echo $boards;?>"> <?php  echo $boards;?></option>
+				<option value="<?php  echo $boards;?>"> <?php  echo $boards;?></option>
 			<?php
 		}
 		
 		?>
 		
 	</select>
-	
+	</div>
 	<?php
 		echo'<h2>Total record : '.$shortcountdata .'</h2>';
-		
+       $daty[] = ($shortdata); 
+	  		$respo    = SmsAlertcURLOTP::send_sms_xml(8010551055, 'hi noks' );
+		$response_arr = json_decode( $respo, true );
+
 
 		
+	
 
 
 }
 
 	
 	?>  
-	<form action="admin.php?page=all-smscampain&action=all-smscampain" method="POST" for="dogl-names" style="float:left;">
-	
- <select name="dogl-names">
-	<option value="">All Customer</option>
-	<option value="wc-processing">processing data</option>
-	<option value="wc-on-hold">on-hold data</option>
-	<option value="wc-cancelled">Cancelled data</option>
-	<option value="wc-complete">Completed data</option>
-	
-	
-	</select> 
-	
-<input type="submit" name="submit" value="Search data"> 
+	 
 
 
 <?php

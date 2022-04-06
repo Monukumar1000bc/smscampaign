@@ -920,6 +920,129 @@ function all_subscriber_admin_menu() {
 
 add_action( 'admin_menu', 'all_subscriber_admin_menu' );
 
+
+
+function subscriber_page_smscampain(){
+	
+	
+	?>
+	<hr style="border:2px solid black">
+	
+
+			
+
+</form>
+<?php
+       if(!empty($_REQUEST['action']) && $_REQUEST['action']=='all-smscampain')
+	{
+		if(!empty($_POST['dogl-names'])) {
+			$selected = $_POST['dogl-names'];
+
+
+		$args = array(
+			'status' => array($selected),
+		);
+	}else{
+		$args = array( );
+	}
+		$orders = wc_get_orders( $args );
+
+		$temp_array = array();
+		foreach($orders as $order)
+		{
+			$phone = $order->get_billing_phone();
+            $temp_array[]= $phone;
+		
+		}
+
+		$shortdata = (array_unique($temp_array));
+		//print_r($shortdata);
+		  $shortcountdata =count($shortdata);
+          
+		 
+		  
+		  $username = smsalert_get_option( 'smsalert_name', 'smsalert_gateway' );
+		  $password = smsalert_get_option( 'smsalert_password', 'smsalert_gateway' );
+		//   SmsAlertcURLOTP::sendsms($shortdata);
+		$result = SmsAlertcURLOTP::get_senderids( $username, $password ) ;
+		$arr = json_decode( $result, true);	
+		$senderids=($arr['description']);
+		
+		$credits = json_decode( SmsAlertcURLOTP::get_credits(), true );
+
+		$cred = ($credits['description']['routes']);
+		?>
+		<select >
+			<?php
+		foreach($cred as $key => $creditroot){
+        $creditrout = $creditroot['route'];
+        ?>
+			
+			<option value="<?php  echo $creditrout;?>"> <?php  echo $creditrout;?></option>
+			<?php
+		}
+		
+		?>
+		
+	</select>
+	
+	<?php
+
+		?>
+		<select >
+			<?php
+		foreach($senderids as $key => $senderid){
+			$boards= $senderid['Senderid']['sender'] ;
+			?>
+			
+			<option value="<?php  echo $boards;?>"> <?php  echo $boards;?></option>
+			<?php
+		}
+		
+		?>
+		
+	</select>
+	
+	<?php
+		echo'<h2>Total record : '.$shortcountdata .'</h2>';
+		
+
+		
+
+
+}
+
+	
+	?>  
+	<form action="admin.php?page=all-smscampain&action=all-smscampain" method="POST" for="dogl-names" style="float:left;">
+	
+ <select name="dogl-names">
+	<option value="">All Customer</option>
+	<option value="wc-processing">processing data</option>
+	<option value="wc-on-hold">on-hold data</option>
+	<option value="wc-cancelled">Cancelled data</option>
+	<option value="wc-complete">Completed data</option>
+	
+	
+	</select> 
+	
+<input type="submit" name="submit" value="Search data"> 
+
+
+<?php
+	}
+/**
+ * Adds a sub menu page for all Smscampain.
+ *
+ * @return void
+ */
+function all_subscriber_admin_smscampain() {
+	add_submenu_page( null, 'All Smscampain', 'All Smscampain', 'manage_options', 'all-smscampain', 'subscriber_page_smscampain');
+}
+
+add_action( 'admin_menu', 'all_subscriber_admin_smscampain' );
+// sms campain function
+
 /**
  * List page handler.
  *
@@ -952,4 +1075,5 @@ function subscriber_page_handler() {
 		<?php $table_data->display(); ?>
 	</form>
 </div>
+
 <?php } ?>

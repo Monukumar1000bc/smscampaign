@@ -942,9 +942,7 @@ function subscriber_page_smscampain(){
 	
 <input type="submit" name="submit" value="Search data">
 
-			
-
-</form><br>
+<br>			
 <div>
 <select name="dogl-names">
 	<option value="dogl-names">slect templates</option>
@@ -953,12 +951,16 @@ function subscriber_page_smscampain(){
 <label for="comment">
  Type your message here...
 </label><br>
-<textarea name="message" id="message"
+<textarea name="message" id="message" value=""
 placeholder="Enter your message here">
 </textarea></div>
+<?php  echo $_POST['message'];?>
+</form>
+
 <?php
        if(!empty($_REQUEST['action']) && $_REQUEST['action']=='all-smscampain')
 	{
+		
 		if(!empty($_POST['dogl-names'])) {
 			$selected = $_POST['dogl-names'];
 
@@ -972,7 +974,7 @@ placeholder="Enter your message here">
 		$orders = wc_get_orders( $args );
 
 		$temp_array = array();
-		foreach($orders as $order)
+		foreach($orders as $key => $order)
 		{
 			$phone = $order->get_billing_phone();
             $temp_array[]= $phone;
@@ -982,9 +984,7 @@ placeholder="Enter your message here">
 		$shortdata = (array_unique($temp_array));
 		//print_r($shortdata);
 		  $shortcountdata =count($shortdata);
-          
-		 
-		  
+         
 		  $username = smsalert_get_option( 'smsalert_name', 'smsalert_gateway' );
 		  $password = smsalert_get_option( 'smsalert_password', 'smsalert_gateway' );
 		//   SmsAlertcURLOTP::sendsms($shortdata);
@@ -1030,13 +1030,25 @@ placeholder="Enter your message here">
 	</select>
 	</div>
 	<?php
+	
+	
 		echo'<h2>Total record : '.$shortcountdata .'</h2>';
-       $daty[] = ($shortdata); 
-	  		$respo    = SmsAlertcURLOTP::send_sms_xml(8010551055, 'hi noks' );
-		$response_arr = json_decode( $respo, true );
-
-
 		
+		$datas=array();
+		
+
+		foreach($shortdata as $newval){
+			$datas[] = array('number'=> $newval,'sms_body'=>'fgk' );	
+			//echo ($newval); 
+    	}
+	   
+	
+	    exit();
+
+	   $respo    = SmsAlertcURLOTP::send_sms_xml( $datas );
+	   $response_arr = json_decode( $respo, true );
+
+
 	
 
 
@@ -1093,5 +1105,5 @@ function subscriber_page_handler() {
 		<?php $table_data->display(); ?>
 	</form>
 </div>
-
+<!-- info@actoscript.com -->
 <?php } ?>

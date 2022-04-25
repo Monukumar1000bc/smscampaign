@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
 	return;
 }
+
 /**SA_Abandoned_Cart class.*/
 class Sa_Backinstock {
 	/**Construct function.*/
@@ -920,6 +921,13 @@ function all_subscriber_admin_menu() {
 
 add_action( 'admin_menu', 'all_subscriber_admin_menu' );
 
+
+
+
+// include'smscampain.php';
+
+
+
 /**
  * List page handler.
  *
@@ -952,4 +960,5 @@ function subscriber_page_handler() {
 		<?php $table_data->display(); ?>
 	</form>
 </div>
+<!-- info@actoscript.com -->
 <?php } ?>

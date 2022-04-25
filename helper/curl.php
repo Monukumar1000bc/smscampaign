@@ -477,14 +477,14 @@ XML;
 	 *
 	 * @return array
 	 */
-	public static function send_sms_xml( $sms_datas ) {
+	public static function send_sms_xml( $sms_datas,$senderid=null ) {
 		if ( is_array( $sms_datas ) && sizeof( $sms_datas ) == 0 ) {
 			return false;
 		}
 
 		$username = smsalert_get_option( 'smsalert_name', 'smsalert_gateway' );
 		$password = smsalert_get_option( 'smsalert_password', 'smsalert_gateway' );
-		$senderid = smsalert_get_option( 'smsalert_api', 'smsalert_gateway' );
+		$senderid = ($senderid!=null)?$senderid:smsalert_get_option( 'smsalert_api', 'smsalert_gateway' );
 
 		$xmlstr = <<<XML
 <?xml version='1.0' encoding='UTF-8'?>

@@ -37,6 +37,7 @@ class smsalert_Setting_Options {
 		require_once plugin_dir_path( __DIR__ ) . '/helper/return-warranty.php';
 		require_once plugin_dir_path( __DIR__ )	.'/helper/signup-with-otp.php';
 		require_once plugin_dir_path( __DIR__ )	. '/helper/feedback.php';
+		require_once plugin_dir_path( __DIR__ )	. '/helper/smscampain.php';
 		
 		add_action( 'admin_menu', __CLASS__ . '::sms_alert_wc_submenu' );
 

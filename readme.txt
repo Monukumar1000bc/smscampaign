@@ -4,7 +4,7 @@ Contributors: cozyvision1
 Tags: order notification, order SMS, woocommerce sms integration, sms plugin, mobile verification
 Requires at least: 4.6
 Tested up to: 5.9
-Stable tag: 3.5.4
+Stable tag: 3.5.3
 Requires PHP: 5.6
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -186,7 +186,7 @@ Please refer [here](https://kb.smsalert.co.in/wordpress) for plugin usage guide.
 
 == Screenshots ==
 
-1. OTP for Checkout.
+1. OTP popup - Login, Registration, Checkout, Contact Form 7.
 2. Login with OTP.
 3. General Settings - Login with your www.smsalert.co.in username and password.
 4. OTP Settings
@@ -203,8 +203,7 @@ Please refer [here](https://kb.smsalert.co.in/wordpress) for plugin usage guide.
 
 == Changelog ==
 
-= 3.5.4 =
-* New: Booking calendar can now send reminder messages
+= development =
 * Enhancement: Ultimate member phone field automatically adds space in the number, and user is unable to login with phone
 * Enhancement: In advanced setting, country listing is now being loaded via ajax for faster page speed
 * Enhancement: Abandoned cart sms will be sent using XML API for better performance
@@ -216,17 +215,14 @@ Please refer [here](https://kb.smsalert.co.in/wordpress) for plugin usage guide.
 * Enhancement: Auto detect OTP on mobile
 * Enhancement: Compatibility with login/signup popup plugin(only for popup)
 * Enhancement: added placeholder in sms alert phone field in Elementor form
-* Enhancement: Signup with OTP, if auto generated username/email already exists, plugin will auto generate new username and email id
 * Bugfix: jQuery conflict issue
 * Bugfix: When hide default login form then login with otp form is showing in footer in urna theme
 * Bugfix: On checkout page when create account checkbox is unchecked then checkout button is not restored to default, if post verify enable on checkout page
 * Bugfix: If otp for register is disabled still mobile field was added in userswp form
-* Bugfix: Compatibility fix with elementor multi step form
-* Bugfix: signup with mobile in raazi theme was not working
+* Bugfix: Compatibility fix with elementor multi step form* Bugfix: signup with mobile in fizza theme was not working
 * Bugfix: if otp for checkout is disabled then number with country code does not merge with country selector at checkout page
 * Bugfix: woodmart theme login with otp at sidebar was not working
 * Bugfix: when hide default login form is enabled then at checkout page, login with otp is showing on load it should be appeared on click
-* compatibility check for latest woocommerce version
 
 = 3.5.3 =
 * Enhancement: Affiliate Manager hooks implemented

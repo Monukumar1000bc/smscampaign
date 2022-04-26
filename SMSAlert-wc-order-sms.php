@@ -3,11 +3,11 @@
  * Plugin Name: SMSAlert - WooCommerce
  * Plugin URI: https://wordpress.org/plugins/sms-alert/
  * Description: This is a WooCommerce add-on. By Using this plugin admin and buyer can get notification after placing order via sms using SMS Alert.
- * Version: 3.5.4
+ * Version: 3.5.3
  * Author: Cozy Vision Technologies Pvt. Ltd.
  * Author URI: https://www.smsalert.co.in
  * WC requires at least: 2.0.0
- * WC tested up to: 6.4.1
+ * WC tested up to: 6.2.1
  * Text Domain: sms-alert
  * License: GPLv2
  */
@@ -63,7 +63,7 @@ if ( ! defined( 'CART_CRON_INTERVAL' ) ) {
 	define( 'CART_CRON_INTERVAL', 10 );// run ab cart cron every 10 min.
 }
 if ( ! defined( 'BOOKING_REMINDER_CRON_INTERVAL' ) ) {
-	define( 'BOOKING_REMINDER_CRON_INTERVAL', 10 );// run booking reminder cron every 10 min.
+	define( 'BOOKING_REMINDER_CRON_INTERVAL', 60 );// run booking reminder cron every 60 min.
 }
 // In minutes. Defines the interval at which msg function is fired.
 if ( ! defined( 'CART_STILL_SHOPPING' ) ) {
@@ -76,7 +76,260 @@ if ( ! defined( 'CART_NEW_STATUS_NOTICE' ) ) {
 if ( ! defined( 'CART_ENCRYPTION_KEY' ) ) {
 	define( 'CART_ENCRYPTION_KEY', 'SgVkYp3s6v9y$B&M)H+MbQeThWmZq4t9' );
 }
+// code for riminder tabale
+if ( ! class_exists( 'WP_List_Table' ) ) {
+	include_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+}
 
+class SA_Admin_Reminder_Table extends WP_List_Table {
+
+
+	/**
+	 * Construct function.
+	 */
+	function __construct() {
+		global $status, $page;
+
+		parent::__construct(
+			array(
+				'singular' => 'id',
+				'plural'   => 'ids',
+			)
+		);
+	}
+
+	/**
+	 * Get columns function.
+	 *
+	 * @return array
+	 */
+	function get_columns() {
+		return $columns = array(
+			'cb'            => '<input type="checkbox" />',
+			'id'            => __( 'ID', 'sms-alert' ),
+			'booking_id'          => __( 'Id', 'sms-alert' ),
+			'phone'         => __( 'Phone', 'sms-alert' ),
+			'start_date'         => __( 'Date', 'sms-alert' ),
+			'msg_sent'      => __( 'status', 'sms-alert' ),
+		);
+	}
+
+	/**
+	 * Get sortable columns function.
+	 *
+	 * @return array
+	 */
+	public function get_sortable_columns() {
+		return $sortable = array(
+			'id'         => array( 'id', true ),
+			'booking'       => array( 'idb', true ),
+			'phone'      => array( 'phone', true ),
+			'start_date'      => array( 'date', true ),
+			'msg_sent' => array( 'msg', true ),
+			
+		);
+	}
+
+	/**
+	 * Column default function.
+	 *
+	 * @param array  $item        item.
+	 * @param string $column_name column_name.
+	 *
+	 * @return string
+	 */
+	function column_default( $item, $column_name ) {
+		return $item[ $column_name ];
+	}
+
+	/**
+	 * Column name function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_name( $item ) {
+		$req_page = sanitize_text_field( wp_unslash( $_REQUEST['page'] ) );
+		$actions  = array(
+			'delete' => sprintf( '<a href="?page=%s&action=delete&id=%s">%s</a>', $req_page, $item['id'], __( 'Delete', 'sms-alert' ) ),
+		);
+
+		return sprintf(
+			'%s %s %s',
+			$item['phone'],
+			
+			$this->row_actions( $actions )
+		);
+	}
+
+	/**
+	 * Column email function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_phone( $item ) {
+		return sprintf(
+			'<a href="mailto:%1$s" title="">%1$s</a>',
+			$item['phone']
+		);
+	}
+
+	
+
+	/**
+	 * Column time function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_start_date( $item ) {
+		$time       = new DateTime( $item['start_date'] );
+		$date_iso   = $time->format( 'c' );
+		$date_title = $time->format( 'M d, Y H:i:s' );
+		$utc_time   = $time->format( 'U' );
+
+		if ( $utc_time > strtotime( '-1 day', current_time( 'timestamp' ) ) ) { // In case the abandoned cart is newly captued
+			$friendly_time = sprintf(
+				/* translators: %1$s - Time, e.g. 1 minute, 5 hours */
+				__( '%1$s ago', 'sms-alert' ),
+				human_time_diff(
+					$utc_time,
+					current_time( 'timestamp' )
+				)
+			);
+		} else { // In case the abandoned cart is older tahn 24 hours
+			$friendly_time = $time->format( 'M d, Y' );
+		}
+
+		return sprintf( '<time datetime="%s" title="%s">%s</time>', $date_iso, $date_title, $friendly_time );
+	}
+
+	/**
+	 * Column status function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_status( $item ) {
+				
+	return sprintf( '<div class="status-item-container"><span class="status msg-sent" >%s (%s)</span></div>', __( 'MSG Sent', 'sms-alert' ), $item['msg_sent'] );
+	}
+
+	/**
+	 * Column cb function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_cb( $item ) {
+		return sprintf(
+			'<input type="checkbox" name="id[]" value="%s" />',
+			$item['id']
+		);
+	}
+
+	/**
+	 * Get bulk actions function.
+	 *
+	 * @return array
+	 */
+	function get_bulk_actions() {
+		$actions = array(
+			'delete' => __( 'Delete', 'sms-alert' ),
+		);
+		return $actions;
+	}
+
+	/**
+	 * Process bulk actions function.
+	 *
+	 * @return void
+	 */
+	function process_bulk_action() {
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'smsalert_booking_reminder'; // do not forget about tables prefix
+
+		if ( 'delete' === $this->current_action() ) {
+			$ids = isset( $_REQUEST['id'] ) ? smsalert_sanitize_array( $_REQUEST['id'] ) : array();
+			if ( ! empty( $ids ) ) {
+				if ( is_array( $ids ) ) { // Bulk abandoned cart deletion
+					foreach ( $ids as $key => $id ) {
+						$wpdb->query(
+							$wpdb->prepare(
+								"DELETE FROM $table_name
+                                WHERE id = %d",
+								intval( $id )
+							)
+						);
+					}
+				} else { // Single abandoned cart deletion
+					$id = $ids;
+					$wpdb->query(
+						$wpdb->prepare(
+							"DELETE FROM $table_name
+                            WHERE id = %d",
+							intval( $id )
+						)
+					);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Prepare items function.
+	 *
+	 * @return void
+	 */
+	function prepare_items($source=null) {
+		global $wpdb;
+		$table_name = $wpdb->prefix .'smsalert_booking_reminder';
+
+		$screen = get_current_screen();
+		$user   = get_current_user_id();
+		$option = $screen->get_option( 'per_page', 'option' );
+		// $per_page = get_user_meta($user, $option, true);
+		$per_page = 10;
+
+		// How much records will be shown per page, if the user has not saved any custom values under Screen options, then default amount of 10 rows will be shown
+		if ( empty( $per_page ) || $per_page < 1 ) {
+			$per_page = $screen->get_option( 'per_page', 'default' );
+		}
+
+		$columns               = $this->get_columns();
+		$hidden                = array();
+		$sortable              = $this->get_sortable_columns();
+		$this->_column_headers = array( $columns, $hidden, $sortable ); // here we configure table headers, defined in our methods
+		$this->process_bulk_action(); // process bulk action if any
+		$total_items = $wpdb->get_var( "SELECT COUNT(id) FROM $table_name WHERE 1" );// will be used in pagination settings
+
+
+		// prepare query params, as usual current page, order by and order direction
+		$paged   = isset( $_REQUEST['paged'] ) ? max( 0, intval( sanitize_text_field( $_REQUEST['paged'] ) ) - 1 ) : 0;
+		$orderby = ( isset( $_REQUEST['orderby'] ) && in_array( $_REQUEST['orderby'], array_keys( $this->get_sortable_columns() ) ) ) ? sanitize_text_field( $_REQUEST['orderby'] ) : 'start_date';
+		$order   = ( isset( $_REQUEST['order'] ) && in_array( $_REQUEST['order'], array( 'asc', 'desc' ) ) ) ? sanitize_text_field( $_REQUEST['order'] ) : 'desc';
+
+		// configure pagination
+		$this->set_pagination_args(
+			array(
+				'total_items' => $total_items, // total items defined above
+				'per_page'    => $per_page, // per page constant defined at top of method
+				'total_pages' => ceil( $total_items / $per_page ), // calculate pages count
+			)
+		);
+
+		// define $items array
+		   $this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE source='".$source."' ORDER BY $orderby $order LIMIT %d OFFSET %d", $per_page, $paged * $per_page), ARRAY_A );
+
+	}
+}
+// /end code riminder tabale
 /**
  * Sanitizes Array of vaues.
  *
@@ -441,7 +694,70 @@ class smsalert_WC_Order_SMS {
 		return $defaults;
 	}
 
-	
+	 /**
+	 * Display page function.
+	 *
+	 * @return void
+	 */
+	public static function display_page() {
+		global $wpdb, $pagenow;
+		$table_name = $wpdb->prefix . 'smsalert_booking_reminder';
+
+		$wp_list_table = new SA_Admin_Reminder_Table();
+		$wp_list_table->prepare_items($_REQUEST['source']);
+		// echo '<pre>';
+		//  print_r($wp_list_table);
+		//  exit();
+		// Output table contents
+		$deleted = false;
+		if ( 'delete' === $wp_list_table->current_action() ) {
+			if ( is_array( $_REQUEST['id'] ) ) { // If deleting multiple lines from table
+				$deleted_row_count = count( $_REQUEST['id'] );
+			} else { // If a single row is deleted
+				$deleted_row_count = 1;
+			}
+			$deleted = true;
+		}
+		?>
+		<div class="wrap">
+			<h1>Booking Reminder</h1>
+			<h2 id="heading-for-admin-notice-dislay"></h2>
+
+		<?php
+		if ( 'admin.php' === $pagenow && 'booking-reminder' === $_GET['page'] ) {
+			if ( $deleted ) {
+				?>
+					<div class="updated below-h2" id="message"><p>Items deleted:  <?php echo esc_attr( $deleted_row_count ); ?></p></div>
+				<?php
+			}
+			if ( 0 === self::reminder_cart_count() ) { // If no abandoned carts, then output this note
+				?>
+				<p>
+				<?php esc_html_e( 'Looks like you do not have any saved Abandoned carts yet.<br/>But do not worry, as soon as someone fills the <strong>Phone number</strong> fields of your WooCommerce Checkout form and abandons the cart, it will automatically appear here.', 'sms-alert' ); ?>
+				</p>
+			<?php } else { ?>
+				<form method="GET">
+					<input type="hidden" name="page" value="<?php echo esc_attr( $_REQUEST['page'] ); ?>"/>
+				<?php $wp_list_table->display(); ?>
+				</form>
+				<?php
+			}
+		}
+		?>
+		</div>
+		<?php
+     }
+     /**
+	 * reminder cart count function.
+	 *
+	 * @return int
+	 */
+	public static function reminder_cart_count() {
+		global $wpdb;
+		$table_name  = $wpdb->prefix . 'smsalert_booking_reminder';
+		$total_items = $wpdb->get_var( "SELECT COUNT(id) FROM $table_name" );
+		return $total_items;
+	}
 	/**
 	 * This function gets role display name from system name.
 	 *
@@ -457,6 +773,7 @@ class smsalert_WC_Order_SMS {
 			return $roles;
 		}
 	}
+	
 	
 	/**
 	 * Instantiate necessary Class
@@ -689,7 +1006,6 @@ class smsalert_WC_Order_SMS {
 			booking_id mediumint(9) NOT NULL,
 			phone VARCHAR(20),
 			source VARCHAR(50),
-			msg_sent TINYINT NOT NULL DEFAULT 0,
 			start_date DATETIME DEFAULT '0000-00-00 00:00:00',
 			PRIMARY KEY  (id)
         ) $charset_collate;";		
@@ -734,7 +1050,6 @@ class smsalert_WC_Order_SMS {
 	public static function run_on_deactivate() {
 		wp_clear_scheduled_hook( 'smsalert_balance_notify' );
 		wp_clear_scheduled_hook('smsalert_followup_sms');
-		wp_clear_scheduled_hook('booking_reminder_sendsms_hook');
 	}
 
 	/**

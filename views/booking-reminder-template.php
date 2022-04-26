@@ -68,6 +68,9 @@ $notify_id = $templates[0]['notify_id'];
 			</div>
 		</div>
 	</div>
+	<div class="submit alignright">
+<a href="admin.php?page=booking-reminder&source=<?php echo $notify_id; ?>" class="button action"><?php esc_html_e( 'View List', 'sms-alert' ); ?></a>
+	</div>
 <!-- /-cvt-accordion -->
 <script>
 	jQuery(document).on('click',"#<?php echo $notify_id ?> .addNew",function(){

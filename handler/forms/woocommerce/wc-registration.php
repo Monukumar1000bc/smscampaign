@@ -539,39 +539,14 @@ class WooCommerceRegistrationForm extends FormInterface {
 
 				}
 
-				$ulogin = str_replace('+', '', $phone);
+				$ulogin = $phone;
 
 				$password = '';
 				if ( empty( $password ) ) {
 					$password = wp_generate_password();
 				}
-				$prefix = 1;
-				$mail = $ulogin . '@nomail.com';
-				while (1){ 
-					$user = get_user_by( 'email', $mail );
-					if(!$user)
-					{
-						break;
-					}
-					else{
-						$mail = $prefix.'-'.$ulogin . '@nomail.com';
-						$prefix++;
-					}
-				}	
-                $prefix = 1;
-                $username = $ulogin;				
-				while (1){ 
-					$user = get_user_by( 'login', $username );
-					if(!$user)
-					{
-						break;
-					}
-					else{
-						$username = $prefix.'-'.$ulogin;
-						$prefix++;
-					}
-				}
-				$new_customer = wp_create_user( $username, $password, $mail );
+					$mail         = $ulogin . '@nomail.com';
+					$new_customer = wp_create_user( $ulogin, $password, $mail );
 
 			}
 			
@@ -592,7 +567,7 @@ class WooCommerceRegistrationForm extends FormInterface {
 
 				$userdata = array(
 					'ID'         => $new_customer,
-					'user_login' => $username,
+					'user_login' => $ulogin,
 					'user_email' => $mail,
 					'role'       => $smsalert_defaultuserrole,
 				);

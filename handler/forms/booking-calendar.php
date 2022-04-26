@@ -51,25 +51,32 @@ class BookingCalendar extends FormInterface {
 		$source = 'booking-calendar';
 		$booking_details = $wpdb->get_results( "SELECT * FROM $table_name WHERE booking_id = $booking_id and source = '$source'" );
 		if ( '1' === $booking_status && 'on' === $customer_notify ) {
-			if ( $booking_details ) {
-				$wpdb->update(
-					$table_name,
-					array(
-						'start_date' => $booking_start,
-						'phone' => $buyer_mob
-					),
-					array( 'booking_id' => $booking_id )
-				);
-			} else {
-				$wpdb->insert(
-					$table_name,
-					array(
-						'booking_id'   => $booking_id,
-						'phone' => $buyer_mob,
-						'source' => $source,
-						'start_date' => $booking_start
-					)
-				);
+			$scheduler_data = get_option( 'smsalert_bc_reminder_scheduler' );
+			if ( isset( $scheduler_data['cron'] ) && ! empty( $scheduler_data['cron'] ) ) {
+				foreach ( $scheduler_data['cron'] as $sdata ) {
+					if ( $sdata['frequency'] > 0 && $sdata['message'] != '' ) {
+						if ( $booking_details ) {
+							$wpdb->update(
+								$table_name,
+								array(
+									'start_date' => $booking_start,
+									'phone' => $buyer_mob
+								),
+								array( 'booking_id' => $booking_id )
+							);
+						} else {
+							$wpdb->insert(
+								$table_name,
+								array(
+									'booking_id'   => $booking_id,
+									'phone' => $buyer_mob,
+									'source' => $source,
+									'start_date' => $booking_start
+								)
+							);
+						}
+					}
+				}
 			}
 		} else {
 			$wpdb->delete( $table_name, array( 'booking_id' => $booking_id ) );
@@ -90,19 +97,18 @@ class BookingCalendar extends FormInterface {
 		global $wpdb;
 		$cron_frequency = BOOKING_REMINDER_CRON_INTERVAL; // pick data from previous CART_CRON_INTERVAL min
 		$table_name     = $wpdb->prefix . 'smsalert_booking_reminder';
-        $source = 'booking-calendar';
+
 		$scheduler_data = get_option( 'smsalert_bc_reminder_scheduler' );
 
 		foreach ( $scheduler_data['cron'] as $sdata ) {
 
 			$datetime = current_time( 'mysql' );
-			
-			$fromdate = date( 'Y-m-d H:i:s', strtotime( '+' . ( $sdata['frequency']*60 - $cron_frequency ) . ' minutes', strtotime( $datetime ) ) );
-			
-			$todate = date( 'Y-m-d H:i:s', strtotime( '+' . $cron_frequency . ' minutes', strtotime( $fromdate ) ) );
-			
+			$todate = date( 'Y-m-d H:i:s', strtotime( '+' . $sdata['frequency'] . ' hours', strtotime( $datetime ) ) );
+
+			$fromdate = date( 'Y-m-d H:i:s', strtotime( '+' . ( $sdata['frequency'] - ($cron_frequency/60) ) . ' hours', strtotime( $datetime ) ) );
+
 			$rows_to_phone = $wpdb->get_results(
-				'SELECT * FROM ' . $table_name . " WHERE start_date > '" . $fromdate . "' AND start_date <= '" . $todate . "' AND source = '$source' ",
+				'SELECT * FROM ' . $table_name . " WHERE start_date > '" . $fromdate . "' AND start_date <= '" . $todate . "' AND source = 'booking-calendar' ",
 				ARRAY_A
 			);
 			if ( $rows_to_phone ) { // If we have new rows in the database
@@ -110,27 +116,9 @@ class BookingCalendar extends FormInterface {
 				   $customer_message = $sdata['message'];
 				   $frequency_time   = $sdata['frequency'];
 				if ( '' !== $customer_message && 0 !== $frequency_time ) {
-					$obj = array();
-					foreach ( $rows_to_phone as $key=>$data ) {
+					foreach ( $rows_to_phone as $data ) {
 						$booking = wpbc_api_get_booking_by_id( $data['booking_id'] );
-						$obj[ $key ]['number']    = $data['phone'];
-                        $obj[ $key ]['sms_body']  = self::parse_sms_body( $booking, $customer_message );
-					}
-					$response     = SmsAlertcURLOTP::send_sms_xml( $obj );
-					$response_arr = json_decode( $response, true );
-					if ( 'success' === $response_arr['status'] ) {
-					    foreach ( $rows_to_phone as $data )
-						{
-							$last_msg_count = $data['msg_sent'];
-						    $total_msg_sent = $last_msg_count + 1;
-							$wpdb->update(
-								$table_name,
-								array(
-									'msg_sent' => $total_msg_sent
-								),
-								array( 'booking_id' => $data['booking_id'], 'source'=>$source )
-							);
-						}
+						do_action( 'sa_send_sms', $data['phone'], self::parse_sms_body( $booking, $customer_message ) );
 					}
 				}
 			}
@@ -289,7 +277,7 @@ class BookingCalendar extends FormInterface {
 			$select_name_id    = 'smsalert_bc_reminder_scheduler[cron][' . $count . '][frequency]';
 			$text_body         = $data['message'];
 			
-            $templates[ $key ]['notify_id']      = 'bc';
+            $templates[ $key ]['notify_id']      = 'booking-calendar';
 			$templates[ $key ]['frequency']      = $data['frequency'];
 			$templates[ $key ]['enabled']        = $current_val;
 			$templates[ $key ]['title']          = 'Send booking reminder to customer';
@@ -436,9 +424,9 @@ class BookingCalendar extends FormInterface {
 			if ( '1' === $booking['is_new'] ) {
 				exit();
 			}
+            self::set_booking_reminder( $booking_id );
 			if ( '1' === $is_approve_or_pending ) {
 				$customer_message = smsalert_get_option( 'customer_sms_bc_body_approved', 'smsalert_bc_message', '' );
-                 self::set_booking_reminder( $booking_id );
 			} else {
 				$customer_message = smsalert_get_option( 'customer_sms_bc_body_pending', 'smsalert_bc_message', '' );
 			}

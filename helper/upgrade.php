@@ -82,7 +82,7 @@ class SAUpgrade {
 		if ( $db_version <= '3.5.3' ) {
 			global $wpdb;
 			$reminder_table_name = $wpdb->prefix . "smsalert_booking_reminder";
-			$wpdb->query("ALTER TABLE $reminder_table_name ADD source varchar(50) NOT NULL DEFAULT 'woocommerce-bookings',ADD msg_sent TINYINT NOT NULL DEFAULT 0");
+			$wpdb->query("ALTER TABLE $reminder_table_name ADD source varchar(50) NOT NULL DEFAULT 'woocommerce-bookings'");
 		}
 
 		update_option( 'smsalert_upgrade_settings', array( 'version' => $plugin_version ) );

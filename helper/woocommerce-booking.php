@@ -39,32 +39,39 @@ class SmsAlertWcBooking {
 		$booking_status = $object->status;
 		$bookings      = get_post_custom( $booking_id );
 		$booking_start = date( 'Y-m-d H:i:s', strtotime( array_shift( $bookings['_booking_start'] ) ) );
-		$buyer_mob = get_post_meta( $object->order_id, '_billing_phone', true );
+		$buyer_mob     = get_user_meta( $object->customer_id, 'billing_phone', true );
 		$customer_notify = smsalert_get_option( 'customer_notify', 'smsalert_wcbk_general', 'on' );
 		global $wpdb;
 		$table_name           = $wpdb->prefix . 'smsalert_booking_reminder';
 		$source = 'woocommerce-bookings';
 		$booking_details = $wpdb->get_results( "SELECT * FROM $table_name WHERE booking_id = $booking_id and source = '$source'" );
 		if ( 'confirmed' === $booking_status && 'on' === $customer_notify ) {
-			if ( $booking_details ) {
-				$wpdb->update(
-					$table_name,
-					array(
-						'start_date' => $booking_start,
-						'phone' => $buyer_mob
-					),
-					array( 'booking_id' => $booking_id, 'source'=>$source )
-				);
-			} else {
-				$wpdb->insert(
-					$table_name,
-					array(
-						'booking_id'   => $booking_id,
-						'phone' => $buyer_mob,
-						'source' => $source,
-						'start_date' => $booking_start
-					)
-				);
+			$scheduler_data = get_option( 'smsalert_wcbk_reminder_scheduler' );
+			if ( isset( $scheduler_data['cron'] ) && ! empty( $scheduler_data['cron'] ) ) {
+				foreach ( $scheduler_data['cron'] as $sdata ) {
+					if ( $sdata['frequency'] > 0 && $sdata['message'] != '' ) {
+						if ( $booking_details ) {
+							$wpdb->update(
+								$table_name,
+								array(
+									'start_date' => $booking_start,
+									'phone' => $buyer_mob
+								),
+								array( 'booking_id' => $booking_id )
+							);
+						} else {
+							$wpdb->insert(
+								$table_name,
+								array(
+									'booking_id'   => $booking_id,
+									'phone' => $buyer_mob,
+									'source' => $source,
+									'start_date' => $booking_start
+								)
+							);
+						}
+					}
+				}
 			}
 		} else {
 			$wpdb->delete( $table_name, array( 'booking_id' => $booking_id ) );
@@ -84,19 +91,18 @@ class SmsAlertWcBooking {
 		global $wpdb;
 		$cron_frequency = BOOKING_REMINDER_CRON_INTERVAL; // pick data from previous CART_CRON_INTERVAL min
 		$table_name     = $wpdb->prefix . 'smsalert_booking_reminder';
-        $source = 'woocommerce-bookings';
+
 		$scheduler_data = get_option( 'smsalert_wcbk_reminder_scheduler' );
 
 		foreach ( $scheduler_data['cron'] as $sdata ) {
 
 			$datetime = current_time( 'mysql' );
-			
-			$fromdate = date( 'Y-m-d H:i:s', strtotime( '+' . ( $sdata['frequency']*60 - $cron_frequency ) . ' minutes', strtotime( $datetime ) ) );
-			
-			$todate = date( 'Y-m-d H:i:s', strtotime( '+' . $cron_frequency . ' minutes', strtotime( $fromdate ) ) );
+			$todate = date( 'Y-m-d H:i:s', strtotime( '+' . $sdata['frequency'] . ' hours', strtotime( $datetime ) ) );
+
+			$fromdate = date( 'Y-m-d H:i:s', strtotime( '+' . ( $sdata['frequency'] - ($cron_frequency/60) ) . ' hours', strtotime( $datetime ) ) );
 
 			$rows_to_phone = $wpdb->get_results(
-				'SELECT * FROM ' . $table_name . " WHERE start_date > '" . $fromdate . "' AND start_date <= '" . $todate . "' AND source = '$source' ",
+				'SELECT * FROM ' . $table_name . " WHERE start_date > '" . $fromdate . "' AND start_date <= '" . $todate . "' AND source = 'woocommerce-bookings' ",
 				ARRAY_A
 			);
 			if ( $rows_to_phone ) { // If we have new rows in the database
@@ -104,26 +110,8 @@ class SmsAlertWcBooking {
 				   $customer_message = $sdata['message'];
 				   $frequency_time   = $sdata['frequency'];
 				if ( '' !== $customer_message && 0 !== $frequency_time ) {
-					$obj = array();
-					foreach ( $rows_to_phone as $key=>$data ) {
-						$obj[ $key ]['number']    = $data['phone'];
-                        $obj[ $key ]['sms_body']  = self::parse_sms_body( $data['booking_id'], $customer_message );
-					}
-					$response     = SmsAlertcURLOTP::send_sms_xml( $obj );
-					$response_arr = json_decode( $response, true );
-					if ( 'success' === $response_arr['status'] ) {
-					    foreach ( $rows_to_phone as $data )
-						{
-							$last_msg_count = $data['msg_sent'];
-						    $total_msg_sent = $last_msg_count + 1;
-							$wpdb->update(
-								$table_name,
-								array(
-									'msg_sent' => $total_msg_sent
-								),
-								array( 'booking_id' => $data['booking_id'], 'source'=>$source )
-							);
-						}
+					foreach ( $rows_to_phone as $data ) {
+						do_action( 'sa_send_sms', $data['phone'], self::parse_sms_body( $data['booking_id'], $customer_message ) );
 					}
 				}
 			}
@@ -256,7 +244,7 @@ class SmsAlertWcBooking {
 			$select_name_id    = 'smsalert_wcbk_reminder_scheduler[cron][' . $count . '][frequency]';
 			$text_body         = $data['message'];
 
-            $templates[ $key ]['notify_id']      = 'wcbk';
+            $templates[ $key ]['notify_id']      = 'woocommerce-bookings';
 			$templates[ $key ]['frequency']      = $data['frequency'];
 			$templates[ $key ]['enabled']        = $current_val;
 			$templates[ $key ]['title']          = 'Send booking reminder to customer';
@@ -369,7 +357,7 @@ class SmsAlertWcBooking {
 			$admin_phone_number = smsalert_get_option( 'sms_admin_phone', 'smsalert_message', '' );
 			$admin_phone_number = str_replace( 'postauthor', 'post_author', $admin_phone_number );
 
-			$buyer_mob = get_post_meta( $object->order_id, '_billing_phone', true );
+			$buyer_mob     = get_user_meta( $object->customer_id, 'billing_phone', true );
 
 			if ( '' !== $buyer_mob && 'on' === $is_enabled ) {
 				$buyer_message = smsalert_get_option( 'wcbk_sms_body_' . $booking_status, 'smsalert_wcbk_message', '' );

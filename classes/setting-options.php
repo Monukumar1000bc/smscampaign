@@ -172,6 +172,8 @@ class smsalert_Setting_Options {
 		add_submenu_page( null, 'Abandoned Carts', __( 'Abandoned Carts', 'sms-alert' ), 'manage_options', 'ab-cart', array( 'SA_Cart_Admin', 'display_page' ) );
 		add_submenu_page( null, 'Abandoned Carts', __( 'Abandoned Carts', 'sms-alert' ), 'manage_options', 'ab-cart-reports', array( 'SA_Cart_Admin', 'display_reports_page' ) );
 		
+		add_submenu_page( null, 'Booking Calendar', __( 'Booking Calendar', 'sms-alert' ), 'manage_options', 'booking-reminder', array( 'smsalert_WC_Order_SMS', 'display_page' ) );
+		
 		add_submenu_page( 'wpbc', __( 'Bookings Listing', 'wpbc' ), __( 'SMS Alert', 'wpbc' ), 'manage_options', 'wpbc', __CLASS__ . '::settings_tab' );
 		
 		add_submenu_page( 'wpbc', __( 'SMS ALERT', 'wpbc' ), __( 'SMS Alert', 'wpbc' ), 'manage_options', 'sms-alert', __CLASS__ . '::settings_tab' );
@@ -766,7 +768,7 @@ class smsalert_Setting_Options {
 									<td>
 									<?php
 									if ( $islogged ) {
-										echo '<h2><strong>SMS Credits</strong></h2>';
+										echo '<h2><strong>'.__( 'SMS Credits', 'sms-alert' ).'</strong></h2>';
 										foreach ( $credits['description']['routes'] as $credit ) {
 											?>
 										<div class="col-lg-12 creditlist" >

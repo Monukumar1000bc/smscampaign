@@ -60,6 +60,9 @@ class WPLoginForm extends FormInterface {
 
 		if ( 'on' === $default_login_otp ) {
 			if ( 'on' === $enabled_login_popup ) {
+				if ( is_plugin_active( 'easy-login-woocommerce/xoo-el-main.php' ) ) {
+				 add_action( 'xoo_el_login_add_fields', array( $this, 'xoo_el_add_login_otp_popup' ) );
+				}
 				add_action( 'woocommerce_login_form_end', array( $this, 'add_login_otp_popup' ) );
 			} else {
 				add_filter( 'authenticate', array( $this, 'handle_smsalert_wp_login' ), 99, 4 );
@@ -193,6 +196,29 @@ class WPLoginForm extends FormInterface {
         add_action( 'wp_footer', array( $this, 'add_loginwithotp_shortcode' ), 15 ); 
 	}
 
+	/**
+	 * Add login otp in popup in login form page.
+	 *
+	 * @return void
+	 */
+	public function xoo_el_add_login_otp_popup() {
+		$enabled_login_popup    = smsalert_get_option( 'login_popup', 'smsalert_general', 'on' );
+		$default_login_otp      = smsalert_get_option( 'buyer_login_otp', 'smsalert_general' );
+		if ( 'on' === $enabled_login_popup && 'on' === $default_login_otp) {
+		$unique_class    = 'sa-class-'.mt_rand(1,100);
+		echo '<script>
+		jQuery("form.xoo-el-form-login").each(function () 
+		{
+			if(!jQuery(this).hasClass("sa-login-form"))
+			{
+			jQuery(this).addClass("'.$unique_class.' sa-login-form");
+			}		
+		});		
+		</script>';	
+		echo do_shortcode( '[sa_verify user_selector="xoo-el-username" pwd_selector="xoo-el-password" submit_selector=".'.$unique_class.' .xoo-el-login-btn"]' );
+		}
+	}
+	
 	/**
 	 * Add login with otp form code in login form page.
 	 *
@@ -375,7 +401,6 @@ class WPLoginForm extends FormInterface {
 	public function handle_smsalert_wp_login( $user, $username, $password ) {
 		SmsAlertUtility::checkSession();
 		$login_with_otp_enabled = ( smsalert_get_option( 'login_with_otp', 'smsalert_general' ) === 'on' ) ? true : false;
-
 		if ( empty( $password ) ) {
 			if ( ! empty( $_REQUEST['username'] ) ) {
 				$phone_number = ! empty( $_REQUEST['username'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['username'] ) ) : '';
@@ -406,11 +431,11 @@ class WPLoginForm extends FormInterface {
 			return $user;
 		}
 
-		$user = $this->getUserIfUsernameIsPhoneNumber( $user, $username, $password, $this->phone_number_key );
+	    $user = $this->getUserIfUsernameIsPhoneNumber( $user, $username, $password, $this->phone_number_key );
 
 		if ( is_wp_error( $user ) ) {
 			return $user;
-		}
+		} 
 
 		$user_meta    = get_userdata( $user->data->ID );
 		$user_role    = $user_meta->roles;
@@ -422,7 +447,7 @@ class WPLoginForm extends FormInterface {
 		if ( ( smsalert_get_option( 'buyer_login_otp', 'smsalert_general' ) === 'off' && smsalert_get_option( 'login_with_otp', 'smsalert_general' ) === 'on' ) ) {
 			return $user;
 		}
-
+       
 		$this->askPhoneAndStartVerification( $user, $this->phone_number_key, $username, $phone_number );
 		$this->fetchPhoneAndStartVerification( $user, $this->phone_number_key, $username, $password, $phone_number );
 		return $user;
@@ -505,8 +530,7 @@ class WPLoginForm extends FormInterface {
 			|| ( array_key_exists( $this->form_session_var2, $_SESSION ) && strcasecmp( $_SESSION[ $this->form_session_var2 ], 'validated' ) === 0 ) ) {
 			return;
 		}
-		SmsAlertUtility::initialize_transaction( $this->form_session_var2 );
-
+		SmsAlertUtility::initialize_transaction( $this->form_session_var2 ); 
 		smsalert_site_challenge_otp( $username, null, null, $phone_number, 'phone', $password, SmsAlertUtility::currentPageUrl(), false );
 	}
 

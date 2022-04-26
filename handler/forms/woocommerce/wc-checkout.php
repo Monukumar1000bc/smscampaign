@@ -210,7 +210,7 @@ class WooCommerceCheckOutForm extends FormInterface {
 		 }
     });
     jQuery(document).on("payment_method_selected",function() {
-		  var payment = jQuery(this).val(); 
+		 var payment = jQuery("input[name=payment_method]:checked").val(); 
 		   onChangePayment(payment);
     });
 	 jQuery(".woocommerce #createaccount").click(function() {
@@ -246,7 +246,7 @@ class WooCommerceCheckOutForm extends FormInterface {
 	{
 		if(!post_verify)
 		{
-		if(ask_otp && ((jQuery.inArray(payment, paymentMethods) > -1) || !selected_payment))
+		if((ask_otp && ((jQuery.inArray(payment, paymentMethods) > -1) || !selected_payment)) || (1 == jQuery(".woocommerce #createaccount").prop("checked") && register_otp))
 		{
 			addShortcode();
 		}
@@ -457,17 +457,17 @@ class WooCommerceCheckOutForm extends FormInterface {
 	 */
 	public function enableDisableScriptForButtonOnPage() {
 		$otp_resend_timer = smsalert_get_option( 'otp_resend_timer', 'smsalert_general', '15' );
-		echo '<script> jQuery(document).ready(function() {$sa = jQuery,';
-		echo '$sa(".woocommerce-message").length>0&&($sa("#order_verify").focus(),$sa("#salert_message").addClass("woocommerce-message"));';
-		echo '$sa("#smsalert_otp_token_submit").click(function(o){';
+		echo '<script> jQuery(document).ready(function() {';
+		echo 'jQuery(".woocommerce-message").length>0&&(jQuery("#order_verify").focus(),jQuery("#salert_message").addClass("woocommerce-message"));';
+		echo 'jQuery("#smsalert_otp_token_submit").click(function(o){';
 		echo 'var action_url = "'. esc_url( site_url() ) . '/?option=smsalert-shortcode-ajax-verify";';
 		
 		if ( is_checkout() && smsalert_get_option( 'checkout_show_country_code', 'smsalert_general' ) === 'on' ) {
-			echo 'm=$sa(this).parents("form").find("input[name=billing_phone]").intlTelInput("getNumber"),';
+			echo 'm=jQuery(this).parents("form").find("input[name=billing_phone]").intlTelInput("getNumber"),';
 		} else {
-			echo 'm=$sa(this).parents("form").find("input[name=billing_phone]").val(),';
+			echo 'm=jQuery(this).parents("form").find("input[name=billing_phone]").val(),';
 		}
-			echo 'a=$sa("div.woocommerce");a.addClass("processing").block({message:null,overlayCSS:{background:"#fff",opacity:.6}}),
+			echo 'a=jQuery("div.woocommerce");a.addClass("processing").block({message:null,overlayCSS:{background:"#fff",opacity:.6}}),
 
 				saInitOTPProcess(
 					this,
@@ -475,33 +475,32 @@ class WooCommerceCheckOutForm extends FormInterface {
 					{user_phone:m},
 					' . esc_attr( $otp_resend_timer ) . ',
 					function(resp){
-						if(resp.result=="success"){$sa(".blockUI").hide()}else{$sa(".blockUI").hide()}
+						if(resp.result=="success"){jQuery(".blockUI").hide()}else{jQuery(".blockUI").hide()}
 					},
 					function(resp){
-						$sa(".blockUI").hide()
+						jQuery(".blockUI").hide()
 					}
 				)
 			return false;
 		}),';
-		echo '""!=$sa("input[name=billing_phone]").val()&&$sa("#smsalert_otp_token_submit").prop( "disabled", false );
-		$sa(document).on("input change","input[name=billing_phone]",function() {
-			$sa(this).val($sa(this).val().replace(/^0+/, "").replace(/\s+/g, ""));
+		echo '""!=jQuery("input[name=billing_phone]").val()&&jQuery("#smsalert_otp_token_submit").prop( "disabled", false );
+		jQuery(document).on("input change","input[name=billing_phone]",function() {
+			jQuery(this).val(jQuery(this).val().replace(/^0+/, "").replace(/\s+/g, ""));
 			
 			var phone;
 			if(typeof sa_otp_settings !=  "undefined" && sa_otp_settings["show_countrycode"]=="on" )
 			{
-				 phone = $sa("input[name=billing_phone]:hidden").val();
+				 phone = jQuery("input[name=billing_phone]:hidden").val();
 			} else{
-				 phone = $sa(this).val();
+				 phone = jQuery(this).val();
 			}
 			
-			
-			if(typeof phone != "undefined" && phone.replace(/\s+/g, "").match(' . esc_attr( SmsAlertConstants::getPhonePattern() ) . ') && (typeof $sa(".sa_phone_error") == "undefined" || $sa(".sa_phone_error").text()==""))  
+			if(typeof phone != "undefined" && phone.replace(/\s+/g, "").match(' . esc_attr( SmsAlertConstants::getPhonePattern() ) . ') && (typeof jQuery(".sa_phone_error") == "undefined" || jQuery(".sa_phone_error").text()==""))  
 			{
 			
-				$sa("#smsalert_otp_token_submit").prop( "disabled", false );
+				jQuery("#smsalert_otp_token_submit").prop( "disabled", false );
 			
-		} else { $sa("#smsalert_otp_token_submit").prop( "disabled", true ); }}),$sa("input[name=billing_phone]").trigger( "input").trigger( "change")});</script>';
+		} else { jQuery("#smsalert_otp_token_submit").prop( "disabled", true ); }}),jQuery("input[name=billing_phone]").trigger( "input").trigger( "change")});</script>';
 	}
 
 	/**

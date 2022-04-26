@@ -48,7 +48,7 @@ class Elementor extends ElementorPro\Modules\Forms\Fields\Field_Base {
 				if ( item.required ) {
 					required = 'required';
 				}
-				return '<input type="sa_billing_phone" class="elementor-field-textual ' + itemClasses + '" name="' + fieldName + '" id="form_field_' + i + '" ' + required + '>';
+				return '<input type="sa_billing_phone" class="elementor-field-textual ' + itemClasses + '" name="' + fieldName + '" id="form_field_' + i + '" ' + required + ' placeholder="' + item.field_label + '">';
 			}
 			
 			elementor.hooks.addFilter( 'elementor_pro/forms/content_template/field/sa_billing_phone', renderField, 10, 4 );
@@ -130,10 +130,10 @@ class Elementor extends ElementorPro\Modules\Forms\Fields\Field_Base {
 	 */
 	public function render( $item, $item_index, $form ) {
 	
-		
 		$form->add_render_attribute( 'input' . $item_index, 'class', 'elementor-field-textual' );
 		
 		$form->add_render_attribute( 'input' . $item_index, 'type', 'sa_billing_phone', true );
+		$form->add_render_attribute( 'input' . $item_index, 'placeholder', $item['field_label'] );
 		
 		echo '<input ' . $form->get_render_attribute_string( 'input' . $item_index ) . '>';
 	}

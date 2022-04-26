@@ -98,7 +98,6 @@ function smsalert_site_otp_validation_form( $user_login, $user_email, $phone_num
 		'otp_resend_timer'       => $otp_resend_timer,
 		'max_otp_resend_allowed' => $max_otp_resend_allowed,
 	);
-
 	get_smsalert_template( 'template/register-otp-template.php', $params );
 	exit();
 }

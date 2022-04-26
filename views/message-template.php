@@ -68,12 +68,6 @@ $url = add_query_arg(
         <a href="admin.php?page=all-subscriber" class="button action alignright"><?php esc_html_e('View Subscriber', 'sms-alert'); ?></a>
     </div>
 <?php } ?>
-<?php if ( 'backinstock' == $checkTemplateFor ) { ?>
-    <div class="submit" style="clear:both">
-        <a href="admin.php?page=all-smscampain" class="button action alignright"><?php esc_html_e('View smscampain', 'sms-alert'); ?></a>
-        
-    </div>
-<?php } ?>
 <!-- /- Backinstock -->
 <!-- Cartbounty -->
 <?php

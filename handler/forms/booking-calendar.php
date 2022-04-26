@@ -28,6 +28,101 @@ class BookingCalendar extends FormInterface {
 		add_action( 'wpbc_booking_approved', array( $this, 'sendsms_approved_pending' ), 99, 2 );
 		add_action( 'wpdev_new_booking', array( $this, 'sendsms_new_booking' ), 100, 5 );
 		add_action( 'wpbc_booking_trash', array( $this, 'sendsms_trash' ), 100, 2 );
+		add_action( 'booking_reminder_sendsms_hook', array( $this, 'send_reminder_sms' ), 10 );
+	}
+	
+	/**
+	 * Set booking reminder.
+	 *
+	 * @param int $booking_id booking id.
+	 */
+	public static function set_booking_reminder( $booking_id ) {
+		if ( function_exists( 'wpbc_api_get_booking_by_id' ) ) {
+		$booking = wpbc_api_get_booking_by_id( $booking_id );
+		if ( empty( $booking ) ) {
+			return;
+		}
+		$booking_status = $booking['approved'];
+		$booking_start = date( 'Y-m-d H:i:s', strtotime( $booking['booking_date'] ) );
+		$buyer_mob     = $booking['formdata']['phone1'];
+		$customer_notify = smsalert_get_option( 'customer_notify', 'smsalert_bc_general', 'on' );
+		global $wpdb;
+		$table_name           = $wpdb->prefix . 'smsalert_booking_reminder';
+		$source = 'booking-calendar';
+		$booking_details = $wpdb->get_results( "SELECT * FROM $table_name WHERE booking_id = $booking_id and source = '$source'" );
+		if ( '1' === $booking_status && 'on' === $customer_notify ) {
+			$scheduler_data = get_option( 'smsalert_bc_reminder_scheduler' );
+			if ( isset( $scheduler_data['cron'] ) && ! empty( $scheduler_data['cron'] ) ) {
+				foreach ( $scheduler_data['cron'] as $sdata ) {
+					if ( $sdata['frequency'] > 0 && $sdata['message'] != '' ) {
+						if ( $booking_details ) {
+							$wpdb->update(
+								$table_name,
+								array(
+									'start_date' => $booking_start,
+									'phone' => $buyer_mob
+								),
+								array( 'booking_id' => $booking_id )
+							);
+						} else {
+							$wpdb->insert(
+								$table_name,
+								array(
+									'booking_id'   => $booking_id,
+									'phone' => $buyer_mob,
+									'source' => $source,
+									'start_date' => $booking_start
+								)
+							);
+						}
+					}
+				}
+			}
+		} else {
+			$wpdb->delete( $table_name, array( 'booking_id' => $booking_id ) );
+		}
+	  }
+	}
+	
+	/**
+	 * Send sms function.
+	 *
+	 * @return void
+	 */
+	function send_reminder_sms() {
+		if ( 'on' !== smsalert_get_option( 'customer_notify', 'smsalert_bc_general' ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$cron_frequency = BOOKING_REMINDER_CRON_INTERVAL; // pick data from previous CART_CRON_INTERVAL min
+		$table_name     = $wpdb->prefix . 'smsalert_booking_reminder';
+
+		$scheduler_data = get_option( 'smsalert_bc_reminder_scheduler' );
+
+		foreach ( $scheduler_data['cron'] as $sdata ) {
+
+			$datetime = current_time( 'mysql' );
+			$todate = date( 'Y-m-d H:i:s', strtotime( '+' . $sdata['frequency'] . ' hours', strtotime( $datetime ) ) );
+
+			$fromdate = date( 'Y-m-d H:i:s', strtotime( '+' . ( $sdata['frequency'] - ($cron_frequency/60) ) . ' hours', strtotime( $datetime ) ) );
+
+			$rows_to_phone = $wpdb->get_results(
+				'SELECT * FROM ' . $table_name . " WHERE start_date > '" . $fromdate . "' AND start_date <= '" . $todate . "' AND source = 'booking-calendar' ",
+				ARRAY_A
+			);
+			if ( $rows_to_phone ) { // If we have new rows in the database
+
+				   $customer_message = $sdata['message'];
+				   $frequency_time   = $sdata['frequency'];
+				if ( '' !== $customer_message && 0 !== $frequency_time ) {
+					foreach ( $rows_to_phone as $data ) {
+						$booking = wpbc_api_get_booking_by_id( $data['booking_id'] );
+						do_action( 'sa_send_sms', $data['phone'], self::parse_sms_body( $booking, $customer_message ) );
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -89,6 +184,9 @@ class BookingCalendar extends FormInterface {
 			$defaults['smsalert_bc_message'][ 'admin_sms_bc_body_' . $vs ]    = '';
 		}
 		$defaults['smsalert_bc_general'][ 'otp_enable'] = 'off';
+		$defaults['smsalert_bc_general']['customer_notify']                = 'off';
+		$defaults['smsalert_bc_reminder_scheduler']['cron'][0]['frequency'] = '1';
+		$defaults['smsalert_bc_reminder_scheduler']['cron'][0]['message']   = '';
 		return $defaults;
 	}
 
@@ -109,6 +207,11 @@ class BookingCalendar extends FormInterface {
 			'checkTemplateFor' => 'bc_admin',
 			'templates'        => self::get_admin_templates(),
 		);
+		
+		$reminder_param = array(
+			'checkTemplateFor' => 'wc_booking_calendar_reminder',
+			'templates'        => self::get_reminder_templates(),
+		);
 
 		$tabs['booking_calendar']['nav']  = 'Booking Calendar';
 		$tabs['booking_calendar']['icon'] = 'dashicons-calendar-alt';
@@ -123,6 +226,11 @@ class BookingCalendar extends FormInterface {
 		$tabs['booking_calendar']['inner_nav']['booking_calendar_admin']['tab_section'] = 'bookingcalendaradmintemplates';
 		$tabs['booking_calendar']['inner_nav']['booking_calendar_admin']['tabContent']  = $admin_param;
 		$tabs['booking_calendar']['inner_nav']['booking_calendar_admin']['filePath']    = 'views/message-template.php';
+		$tabs['booking_calendar']['inner_nav']['booking_calendar_reminder']['title']       = 'Booking Reminder';
+		$tabs['booking_calendar']['inner_nav']['booking_calendar_reminder']['tab_section'] = 'bookingremindertemplates';
+		$tabs['booking_calendar']['inner_nav']['booking_calendar_reminder']['tabContent']  = $reminder_param;
+		$tabs['booking_calendar']['inner_nav']['booking_calendar_reminder']['filePath']    = 'views/booking-reminder-template.php';
+		
 		$tabs['booking_calendar']['help_links']                        = array(
 			'youtube_link' => array(
 				'href'   => 'https://youtu.be/4BXd_XZt9zM',
@@ -143,6 +251,45 @@ class BookingCalendar extends FormInterface {
 			),
 		);
 		return $tabs;
+	}
+	
+	/**
+	 * Get wc renewal templates function.
+	 *
+	 * @return array
+	 * */
+	public static function get_reminder_templates() {
+		$current_val      = smsalert_get_option( 'customer_notify', 'smsalert_bc_general', 'on' );
+		$checkbox_name_id = 'smsalert_bc_general[customer_notify]';
+
+		$scheduler_data = get_option( 'smsalert_bc_reminder_scheduler' );
+		$templates      = array();
+		$count          = 0;
+		if ( empty( $scheduler_data ) ) {
+			$scheduler_data['cron'][] = array(
+				'frequency' => '1',
+				'message'   => sprintf( __( 'Hello %1$s, your booking %2$s with %3$s is fixed on %4$s.%5$sPowered by%6$swww.smsalert.co.in', 'sms-alert' ), '[name]', '#[booking_id]', '[store_name]', '[date]', PHP_EOL, PHP_EOL ),
+			);
+		}
+		foreach ( $scheduler_data['cron'] as $key => $data ) {
+
+			$text_area_name_id = 'smsalert_bc_reminder_scheduler[cron][' . $count . '][message]';
+			$select_name_id    = 'smsalert_bc_reminder_scheduler[cron][' . $count . '][frequency]';
+			$text_body         = $data['message'];
+			
+            $templates[ $key ]['notify_id']      = 'bc';
+			$templates[ $key ]['frequency']      = $data['frequency'];
+			$templates[ $key ]['enabled']        = $current_val;
+			$templates[ $key ]['title']          = 'Send booking reminder to customer';
+			$templates[ $key ]['checkboxNameId'] = $checkbox_name_id;
+			$templates[ $key ]['text-body']      = $text_body;
+			$templates[ $key ]['textareaNameId'] = $text_area_name_id;
+			$templates[ $key ]['selectNameId']   = $select_name_id;
+			$templates[ $key ]['token']          = self::get_booking_calendarvariables();
+
+			$count++;
+		}
+		return $templates;
 	}
 
 	/**
@@ -277,7 +424,7 @@ class BookingCalendar extends FormInterface {
 			if ( '1' === $booking['is_new'] ) {
 				exit();
 			}
-
+            self::set_booking_reminder( $booking_id );
 			if ( '1' === $is_approve_or_pending ) {
 				$customer_message = smsalert_get_option( 'customer_sms_bc_body_approved', 'smsalert_bc_message', '' );
 			} else {
@@ -333,7 +480,7 @@ class BookingCalendar extends FormInterface {
 	 * @return void
 	 */
 	public function sendsms_trash( $booking_id, $is_trash ) {
-
+        self::set_booking_reminder( $booking_id );
 		if ( function_exists( 'wpbc_api_get_booking_by_id' ) ) {
 			$buyer_sms_data           = array();
 			$booking                  = wpbc_api_get_booking_by_id( $booking_id );
@@ -382,7 +529,8 @@ class BookingCalendar extends FormInterface {
 		$visitor      = $data['formdata']['visitors1'];
 		$phone        = $data['formdata']['phone1'];
 		$details      = $data['formdata']['details1'];
-		$booking_date = $data['booking_date'];
+		$booking_date = date( 'M d,Y H:i', strtotime($data['booking_date']));
+		$booking_id   = $data['booking_id'];
 
 		$find = array(
 			'[name]',
@@ -392,6 +540,7 @@ class BookingCalendar extends FormInterface {
 			'[phone]',
 			'[details]',
 			'[date]',
+			'[booking_id]',
 		);
 
 		$replace = array(
@@ -402,6 +551,7 @@ class BookingCalendar extends FormInterface {
 			$phone,
 			$details,
 			$booking_date,
+			$booking_id
 		);
 
 		$content = str_replace( $find, $replace, $content );
@@ -421,6 +571,7 @@ class BookingCalendar extends FormInterface {
 			$variable[ '[' . $vk . ']' ] = $vv;
 		}
 		$variable['[date]'] = 'Booking Date';
+		$variable['[booking_id]'] = 'Booking Id';
 		return $variable;
 	}
 	

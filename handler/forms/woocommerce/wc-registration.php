@@ -63,6 +63,10 @@ class WooCommerceRegistrationForm extends FormInterface {
 
 			if ( $this->popup_enabled ) {
 				add_action( 'woocommerce_register_form_end', array( $this, 'smsalert_display_registerOTP_btn' ) );
+				if ( is_plugin_active( 'easy-login-woocommerce/xoo-el-main.php' ) ) {
+					add_action( 'xoo_el_register_add_fields', array( $this, 'smsalert_add_phone_field' ),1 );	
+					add_action( 'xoo_el_register_add_fields', array( $this, 'xoo_el_smsalert_display_registerOTP_btn' ) );
+				}
 			}
 		}
 		
@@ -236,6 +240,23 @@ class WooCommerceRegistrationForm extends FormInterface {
 		});		
 		</script>';
 		echo do_shortcode( '[sa_verify phone_selector="#reg_billing_phone" submit_selector= ".'.$unique_class.'.register .woocommerce-Button"]' );
+	}
+	
+	/**
+	 * This function displays a OTP button on registration form.
+	 */
+	public static function xoo_el_smsalert_display_registerOTP_btn() {
+		$unique_class    = 'sa-class-'.mt_rand(1,100);
+	    echo '<script>
+		jQuery("form.xoo-el-form-register").each(function () 
+		{
+			if(!jQuery(this).hasClass("sa-reg-form"))
+			{
+			jQuery(this).addClass("'.$unique_class.' sa-reg-form");
+			}		
+		});		
+		</script>';
+		echo do_shortcode( '[sa_verify phone_selector="#reg_billing_phone" submit_selector= ".'.$unique_class.' .xoo-el-register-btn"]' );
 	}
 
 	/**
@@ -506,11 +527,6 @@ class WooCommerceRegistrationForm extends FormInterface {
 				wp_redirect($redirect);
 				exit();
 			}
-			
-			
-			$m2 = isset( $_REQUEST['email'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['email'] ) ) : '';
-
-			$useMobAsUname = '';
 
 			// important.
 			$mobileaccp = 1;

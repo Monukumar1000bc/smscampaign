@@ -43,7 +43,8 @@ class SmsAlertWcBooking {
 		$customer_notify = smsalert_get_option( 'customer_notify', 'smsalert_wcbk_general', 'on' );
 		global $wpdb;
 		$table_name           = $wpdb->prefix . 'smsalert_booking_reminder';
-		$booking_details = $wpdb->get_results( "SELECT * FROM $table_name WHERE booking_id = $booking_id " );
+		$source = 'woocommerce-bookings';
+		$booking_details = $wpdb->get_results( "SELECT * FROM $table_name WHERE booking_id = $booking_id and source = '$source'" );
 		if ( 'confirmed' === $booking_status && 'on' === $customer_notify ) {
 			$scheduler_data = get_option( 'smsalert_wcbk_reminder_scheduler' );
 			if ( isset( $scheduler_data['cron'] ) && ! empty( $scheduler_data['cron'] ) ) {
@@ -64,6 +65,7 @@ class SmsAlertWcBooking {
 								array(
 									'booking_id'   => $booking_id,
 									'phone' => $buyer_mob,
+									'source' => $source,
 									'start_date' => $booking_start
 								)
 							);
@@ -100,7 +102,7 @@ class SmsAlertWcBooking {
 			$fromdate = date( 'Y-m-d H:i:s', strtotime( '+' . ( $sdata['frequency'] - ($cron_frequency/60) ) . ' hours', strtotime( $datetime ) ) );
 
 			$rows_to_phone = $wpdb->get_results(
-				'SELECT * FROM ' . $table_name . " WHERE start_date > '" . $fromdate . "' AND start_date <= '" . $todate . "' ",
+				'SELECT * FROM ' . $table_name . " WHERE start_date > '" . $fromdate . "' AND start_date <= '" . $todate . "' AND source = 'woocommerce-bookings' ",
 				ARRAY_A
 			);
 			if ( $rows_to_phone ) { // If we have new rows in the database
@@ -242,6 +244,7 @@ class SmsAlertWcBooking {
 			$select_name_id    = 'smsalert_wcbk_reminder_scheduler[cron][' . $count . '][frequency]';
 			$text_body         = $data['message'];
 
+            $templates[ $key ]['notify_id']      = 'wcbk';
 			$templates[ $key ]['frequency']      = $data['frequency'];
 			$templates[ $key ]['enabled']        = $current_val;
 			$templates[ $key ]['title']          = 'Send booking reminder to customer';

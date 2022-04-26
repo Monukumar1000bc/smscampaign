@@ -231,14 +231,14 @@ class WpMemberForm extends FormInterface {
 		$field_content .= "title='Please Enter an '" . $sa_type . "'to enable this.'>Click Here to Verify " . $sa_type . '</button></div>';
 		$field_content .= "<div style='margin-top:2%'><div id='salert_message' hidden='' style='background-color: #f7f6f7;padding: ";
 		$field_content .= "1em 2em 1em 3.5em;'></div></div>";
-		$field_content .= '<script>jQuery("input[name=' . $field . ']").addClass("phone-valid");jQuery(document).ready(function(){$sa=jQuery;$sa("#smsalert_otp_token_submit").click(function(o){ ';
-		$field_content .= 'var e=(typeof sa_otp_settings  != "undefined" && sa_otp_settings["show_countrycode"]=="on") ? $sa("input[name=' . $field . ']:hidden").val() : $sa("input[name=' . $field . ']").val(); $sa("#salert_message").empty(),$sa("#salert_message").append("Sending OTP..."),';
-		$field_content .= '$sa("#salert_message").show(),$sa.ajax({url:"' . site_url() . '/?option=smsalert-wpmember-form",type:"POST",';
+		$field_content .= '<script>jQuery("input[name=' . $field . ']").addClass("phone-valid");jQuery(document).ready(function(){jQuery("#smsalert_otp_token_submit").click(function(o){ ';
+		$field_content .= 'var e=(typeof sa_otp_settings  != "undefined" && sa_otp_settings["show_countrycode"]=="on") ? jQuery("input[name=' . $field . ']:hidden").val() : jQuery("input[name=' . $field . ']").val(); jQuery("#salert_message").empty(),jQuery("#salert_message").append("Sending OTP..."),';
+		$field_content .= 'jQuery("#salert_message").show(),jQuery.ajax({url:"' . site_url() . '/?option=smsalert-wpmember-form",type:"POST",';
 		$field_content .= 'data:{user_' . $sa_type . ':e},crossDomain:!0,dataType:"json",success:function(o){ ';
-		$field_content .= 'if(o.result=="success"){$sa("#salert_message").empty(),$sa("#salert_message").append(o.message),';
-		$field_content .= '$sa("#salert_message").css("border-top","3px solid green"),$sa("input[name=email_verify]").focus()}else{';
-		$field_content .= '$sa("#salert_message").empty(),$sa("#salert_message").append(o.message),$sa("#salert_message").css("border-top","3px solid red")';
-		$field_content .= ',$sa("input[name=phone_verify]").focus()} ;},error:function(o,e,n){}})});});</script>';
+		$field_content .= 'if(o.result=="success"){jQuery("#salert_message").empty(),jQuery("#salert_message").append(o.message),';
+		$field_content .= 'jQuery("#salert_message").css("border-top","3px solid green"),jQuery("input[name=email_verify]").focus()}else{';
+		$field_content .= 'jQuery("#salert_message").empty(),jQuery("#salert_message").append(o.message),jQuery("#salert_message").css("border-top","3px solid red")';
+		$field_content .= ',jQuery("input[name=phone_verify]").focus()} ;},error:function(o,e,n){}})});});</script>';
 
 		return $field_content;
 	}

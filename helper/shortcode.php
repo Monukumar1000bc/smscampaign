@@ -61,6 +61,12 @@ class SAVerify {
 		if ( ! empty( $submit_selector ) && ! preg_match( '/[#.]/', $submit_selector ) ) {
 			$submit_selector = '[name=' . $submit_selector . ']';
 		}
+		if ( ! empty( $username_selector ) && ! preg_match( '/[#.]/', $username_selector ) ) {
+			$username_selector = '[name=' . $username_selector . ']';
+		}
+		if ( ! empty( $password_selector ) && ! preg_match( '/[#.]/', $password_selector ) ) {
+			$password_selector = '[name=' . $password_selector . ']';
+		}
 
 		if ( ! empty( $phone_selector ) && ! preg_match( '/[#.]/', $phone_selector ) ) {
 			$phone_selector = 'input[name=' . $phone_selector . ']';

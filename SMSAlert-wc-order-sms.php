@@ -76,7 +76,384 @@ if ( ! defined( 'CART_NEW_STATUS_NOTICE' ) ) {
 if ( ! defined( 'CART_ENCRYPTION_KEY' ) ) {
 	define( 'CART_ENCRYPTION_KEY', 'SgVkYp3s6v9y$B&M)H+MbQeThWmZq4t9' );
 }
+// code for riminder tabale
 
+class SA_Admin_Table extends WP_List_Table {
+
+
+	/**
+	 * Construct function.
+	 */
+	function __construct() {
+		global $status, $page;
+
+		parent::__construct(
+			array(
+				'singular' => 'id',
+				'plural'   => 'ids',
+			)
+		);
+	}
+
+	/**
+	 * Get columns function.
+	 *
+	 * @return array
+	 */
+	function get_columns() {
+		return $columns = array(
+			'cb'            => '<input type="checkbox" />',
+			'id'            => __( 'ID', 'sms-alert' ),
+			'name'          => __( 'Name, Surname', 'sms-alert' ),
+			'email'         => __( 'Email', 'sms-alert' ),
+			'phone'         => __( 'Phone', 'sms-alert' ),
+			'location'      => __( 'Location', 'sms-alert' ),
+			'cart_contents' => __( 'Cart contents', 'sms-alert' ),
+			'cart_total'    => __( 'Cart total', 'sms-alert' ),
+			'time'          => __( 'Time', 'sms-alert' ),
+			'status'        => __( 'Status', 'sms-alert' ),
+		);
+	}
+
+	/**
+	 * Get sortable columns function.
+	 *
+	 * @return array
+	 */
+	public function get_sortable_columns() {
+		return $sortable = array(
+			'id'         => array( 'id', true ),
+			'name'       => array( 'name', true ),
+			'email'      => array( 'email', true ),
+			'phone'      => array( 'phone', true ),
+			'cart_total' => array( 'cart_total', true ),
+			'time'       => array( 'time', true ),
+		);
+	}
+
+	/**
+	 * Column default function.
+	 *
+	 * @param array  $item        item.
+	 * @param string $column_name column_name.
+	 *
+	 * @return string
+	 */
+	function column_default( $item, $column_name ) {
+		return $item[ $column_name ];
+	}
+
+	/**
+	 * Column name function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_name( $item ) {
+		$req_page = sanitize_text_field( wp_unslash( $_REQUEST['page'] ) );
+		$actions  = array(
+			'delete' => sprintf( '<a href="?page=%s&action=delete&id=%s">%s</a>', $req_page, $item['id'], __( 'Delete', 'sms-alert' ) ),
+		);
+
+		return sprintf(
+			'%s %s %s',
+			$item['name'],
+			$item['surname'],
+			$this->row_actions( $actions )
+		);
+	}
+
+	/**
+	 * Column email function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_email( $item ) {
+		return sprintf(
+			'<a href="mailto:%1$s" title="">%1$s</a>',
+			$item['email']
+		);
+	}
+
+	/**
+	 * Column location function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_location( $item ) {
+		if ( is_serialized( $item['location'] ) ) {
+			$location_data = unserialize( $item['location'] );
+			$country       = $location_data['country'];
+			$city          = $location_data['city'];
+			$postcode      = $location_data['postcode'];
+
+		} else {
+			$parts = explode( ',', $item['location'] ); // Splits the Location field into parts where there are commas
+			if ( count( $parts ) > 1 ) {
+				$country = $parts[0];
+				$city    = trim( $parts[1] ); // Trim removes white space before and after the string
+			} else {
+				$country = $parts[0];
+				$city    = '';
+			}
+
+			$postcode = '';
+			if ( is_serialized( $item['other_fields'] ) ) {
+				$other_fields = @unserialize( $item['other_fields'] );
+				if ( isset( $other_fields['ab_cart_billing_postcode'] ) ) {
+					$postcode = $other_fields['ab_cart_billing_postcode'];
+				}
+			}
+		}
+		$location = $country;
+		if ( ! empty( $city ) ) {
+			$location .= ', ' . $city;
+		}
+		if ( ! empty( $postcode ) ) {
+			$location .= ', ' . $postcode;
+		}
+		return sprintf(
+			'%s',
+			$location
+		);
+	}
+
+	/**
+	 * Column cart contents function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_cart_contents( $item ) {
+		if ( ! is_serialized( $item['cart_contents'] ) ) {
+			return;
+		}
+
+		$product_array = @unserialize( $item['cart_contents'] ); // Retrieving array from database column cart_contents
+		$output        = '';
+
+		if ( $product_array ) {
+			// Displaying cart contents with thumbnails
+			foreach ( $product_array as $product ) {
+				if ( is_array( $product ) ) {
+					if ( isset( $product['product_title'] ) ) {
+						   // Checking product image
+						if ( ! empty( $product['product_variation_id'] ) ) { // In case of a variable product
+							$image = get_the_post_thumbnail_url( $product['product_variation_id'], 'thumbnail' );
+							if ( empty( $image ) ) { // If variation didn't have an image set
+									  $image = get_the_post_thumbnail_url( $product['product_id'], 'thumbnail' );
+							}
+						} else { // In case of a simple product
+							$image = get_the_post_thumbnail_url( $product['product_id'], 'thumbnail' );
+						}
+
+						if ( empty( $image ) ) { // In case product has no image, output default WooCommerce image
+							$image = wc_placeholder_img_src( 'thumbnail' );
+						}
+
+						$product_title     = $product['product_title'];
+						$quantity          = ' (' . $product['quantity'] . ')'; // Enclose product quantity in brackets
+						$edit_product_link = get_edit_post_link( $product['product_id'], '&' ); // Get product link by product ID
+						if ( $edit_product_link ) { // If link exists (meaning the product hasn't been deleted)
+							$output .= '<div><a href="' . $edit_product_link . '" title="' . $product_title . $quantity . '" target="_blank"><img src="' . $image . '" title="' . $product_title . $quantity . '" alt ="' . $product_title . $quantity . '" height="50" width="50" /></a><br><span class="tooltiptext">' . $product_title . $quantity . '</span></div>';
+						} else {
+							$output .= '<div><img src="' . $image . '" title="' . $product_title . $quantity . '" alt ="' . $product_title . $quantity . '" /><br><span class="tooltiptext">' . $product_title . $quantity . '</span></div>';
+						}
+					}
+				}
+			}
+		}
+		return sprintf( '%s', $output );
+	}
+
+	/**
+	 * Column cart total function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_cart_total( $item ) {
+		return sprintf(
+			'%0.2f %s',
+			$item['cart_total'],
+			$item['currency']
+		);
+	}
+
+	/**
+	 * Column time function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_time( $item ) {
+		$time       = new DateTime( $item['time'] );
+		$date_iso   = $time->format( 'c' );
+		$date_title = $time->format( 'M d, Y H:i:s' );
+		$utc_time   = $time->format( 'U' );
+
+		if ( $utc_time > strtotime( '-1 day', current_time( 'timestamp' ) ) ) { // In case the abandoned cart is newly captued
+			$friendly_time = sprintf(
+				/* translators: %1$s - Time, e.g. 1 minute, 5 hours */
+				__( '%1$s ago', 'sms-alert' ),
+				human_time_diff(
+					$utc_time,
+					current_time( 'timestamp' )
+				)
+			);
+		} else { // In case the abandoned cart is older tahn 24 hours
+			$friendly_time = $time->format( 'M d, Y' );
+		}
+
+		return sprintf( '<time datetime="%s" title="%s">%s</time>', $date_iso, $date_title, $friendly_time );
+	}
+
+	/**
+	 * Column status function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_status( $item ) {
+		$cart_time    = strtotime( $item['time'] );
+		$date         = date_create( current_time( 'mysql', false ) );
+		$current_time = strtotime( date_format( $date, 'Y-m-d H:i:s' ) );
+		$status       = '';
+
+		if ( $cart_time > $current_time - CART_STILL_SHOPPING * 60 && '0' === $item['msg_sent'] && '0' === $item['recovered'] ) { // Checking time if user is still shopping or might return - we add shopping label
+			$status .= sprintf( '<span class="status shopping">%s</span>', __( 'Shopping', 'sms-alert' ) );
+
+		} else {
+			if ( $cart_time > ( $current_time - CART_NEW_STATUS_NOTICE * 60 ) && '0' === $item['msg_sent'] && '0' === $item['recovered'] ) { // Checking time if user has not gone through with the checkout after the specified time we add new label
+				$status .= sprintf( '<span class="status new" >%s</span>', __( 'New', 'sms-alert' ) );
+			}
+			if ( '0' !== $item['msg_sent'] && '0' === $item['recovered'] ) {
+				$status .= sprintf( '<div class="status-item-container"><span class="status msg-sent" >%s (%s)</span></div>', __( 'MSG Sent', 'sms-alert' ), $item['msg_sent'] );
+			}
+			if ( '1' === $item['recovered'] ) {
+				$status .= sprintf( '<div class="status-item-container"><span class="status recovered" >%s</span></div>', __( 'Recovered', 'sms-alert' ) );
+			}
+		}
+		return $status;
+	}
+
+	/**
+	 * Column cb function.
+	 *
+	 * @param array $item item.
+	 *
+	 * @return string
+	 */
+	function column_cb( $item ) {
+		return sprintf(
+			'<input type="checkbox" name="id[]" value="%s" />',
+			$item['id']
+		);
+	}
+
+	/**
+	 * Get bulk actions function.
+	 *
+	 * @return array
+	 */
+	function get_bulk_actions() {
+		$actions = array(
+			'delete' => __( 'Delete', 'sms-alert' ),
+		);
+		return $actions;
+	}
+
+	/**
+	 * Process bulk actions function.
+	 *
+	 * @return void
+	 */
+	function process_bulk_action() {
+		global $wpdb;
+		$table_name = $wpdb->prefix . SA_CART_TABLE_NAME; // do not forget about tables prefix
+
+		if ( 'delete' === $this->current_action() ) {
+			$ids = isset( $_REQUEST['id'] ) ? smsalert_sanitize_array( $_REQUEST['id'] ) : array();
+			if ( ! empty( $ids ) ) {
+				if ( is_array( $ids ) ) { // Bulk abandoned cart deletion
+					foreach ( $ids as $key => $id ) {
+						$wpdb->query(
+							$wpdb->prepare(
+								"DELETE FROM $table_name
+                                WHERE id = %d",
+								intval( $id )
+							)
+						);
+					}
+				} else { // Single abandoned cart deletion
+					$id = $ids;
+					$wpdb->query(
+						$wpdb->prepare(
+							"DELETE FROM $table_name
+                            WHERE id = %d",
+							intval( $id )
+						)
+					);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Prepare items function.
+	 *
+	 * @return void
+	 */
+	function prepare_items() {
+		global $wpdb;
+		$table_name = $wpdb->prefix . SA_CART_TABLE_NAME;
+
+		$screen = get_current_screen();
+		$user   = get_current_user_id();
+		$option = $screen->get_option( 'per_page', 'option' );
+		// $per_page = get_user_meta($user, $option, true);
+		$per_page = 10;
+
+		// How much records will be shown per page, if the user has not saved any custom values under Screen options, then default amount of 10 rows will be shown
+		if ( empty( $per_page ) || $per_page < 1 ) {
+			$per_page = $screen->get_option( 'per_page', 'default' );
+		}
+
+		$columns               = $this->get_columns();
+		$hidden                = array();
+		$sortable              = $this->get_sortable_columns();
+		$this->_column_headers = array( $columns, $hidden, $sortable ); // here we configure table headers, defined in our methods
+		$this->process_bulk_action(); // process bulk action if any
+		$total_items = $wpdb->get_var( "SELECT COUNT(id) FROM $table_name WHERE 1" );// will be used in pagination settings
+
+		// prepare query params, as usual current page, order by and order direction
+		$paged   = isset( $_REQUEST['paged'] ) ? max( 0, intval( sanitize_text_field( $_REQUEST['paged'] ) ) - 1 ) : 0;
+		$orderby = ( isset( $_REQUEST['orderby'] ) && in_array( $_REQUEST['orderby'], array_keys( $this->get_sortable_columns() ) ) ) ? sanitize_text_field( $_REQUEST['orderby'] ) : 'time';
+		$order   = ( isset( $_REQUEST['order'] ) && in_array( $_REQUEST['order'], array( 'asc', 'desc' ) ) ) ? sanitize_text_field( $_REQUEST['order'] ) : 'desc';
+
+		// configure pagination
+		$this->set_pagination_args(
+			array(
+				'total_items' => $total_items, // total items defined above
+				'per_page'    => $per_page, // per page constant defined at top of method
+				'total_pages' => ceil( $total_items / $per_page ), // calculate pages count
+			)
+		);
+
+		// define $items array
+		   $this->items = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $table_name WHERE 1 ORDER BY $orderby $order LIMIT %d OFFSET %d", $per_page, $paged * $per_page ), ARRAY_A );
+	}
+}
+// /end code riminder tabale
 /**
  * Sanitizes Array of vaues.
  *
@@ -441,7 +818,62 @@ class smsalert_WC_Order_SMS {
 		return $defaults;
 	}
 
-	
+	 /**
+	 * Display page function.
+	 *
+	 * @return void
+	 */
+	public static function display_page() {
+		global $wpdb, $pagenow;
+		
+		$sql = "SELECT * FROM wp_smsalert_booking_reminder";
+		$result = $wpdb->get_results($sql) ;
+		
+			foreach( $result as $results ) {
+		echo'<pre>';
+				print_r($results);
+		       
+			}
+			exit(); 
+		// Output table contents
+		$deleted = false;
+		if ( 'delete' === $wp_list_table->current_action() ) {
+			if ( is_array( $_REQUEST['id'] ) ) { // If deleting multiple lines from table
+				$deleted_row_count = count( $_REQUEST['id'] );
+			} else { // If a single row is deleted
+				$deleted_row_count = 1;
+			}
+			$deleted = true;
+		}
+		?>
+		<div class="wrap">
+			<h1>Abandoned Cart <a href="admin.php?page=ab-cart-reports" class="button action">View Reports</a></h1>
+			<h2 id="heading-for-admin-notice-dislay"></h2>
+
+		<?php
+		if ( 'admin.php' === $pagenow && 'ab-cart' === $_GET['page'] ) {
+			if ( $deleted ) {
+				?>
+					<div class="updated below-h2" id="message"><p>Items deleted:  <?php echo esc_attr( $deleted_row_count ); ?></p></div>
+				<?php
+			}
+			if ( 0 === self::abandoned_cart_count() ) { // If no abandoned carts, then output this note
+				?>
+				<p>
+				<?php esc_html_e( 'Looks like you do not have any saved Abandoned carts yet.<br/>But do not worry, as soon as someone fills the <strong>Phone number</strong> fields of your WooCommerce Checkout form and abandons the cart, it will automatically appear here.', 'sms-alert' ); ?>
+				</p>
+			<?php } else { ?>
+				<form method="GET">
+					<input type="hidden" name="page" value="<?php echo esc_attr( $_REQUEST['page'] ); ?>"/>
+				<?php $wp_list_table->display(); ?>
+				</form>
+				<?php
+			}
+		}
+		?>
+		</div>
+		<?php
+     }
 	/**
 	 * This function gets role display name from system name.
 	 *
@@ -688,6 +1120,7 @@ class smsalert_WC_Order_SMS {
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			booking_id mediumint(9) NOT NULL,
 			phone VARCHAR(20),
+			source VARCHAR(50),
 			start_date DATETIME DEFAULT '0000-00-00 00:00:00',
 			PRIMARY KEY  (id)
         ) $charset_collate;";		
@@ -707,7 +1140,8 @@ class smsalert_WC_Order_SMS {
 		delete_option( 'ab_cart_fc_captured_abandoned_cart_count' );
 
 		$user_settings_notification_frequency = smsalert_get_option( 'customer_notify', 'smsalert_abandoned_cart', 'on' );
-		$user_settings_reminder_frequency = smsalert_get_option( 'customer_notify', 'smsalert_wcbk_general', 'on' );
+		$wcbk_reminder_frequency = smsalert_get_option( 'customer_notify', 'smsalert_wcbk_general', 'on' );
+		$bc_reminder_frequency = smsalert_get_option( 'customer_notify', 'smsalert_bc_general', 'on' );
 
 		if ( 'off' === $user_settings_notification_frequency ) { // If SMS notifications have been disabled, we disable cron job.
 			wp_clear_scheduled_hook( 'ab_cart_notification_sendsms_hook' );
@@ -716,7 +1150,7 @@ class smsalert_WC_Order_SMS {
 				wp_schedule_event( time(), 'sendsms_interval', 'ab_cart_notification_sendsms_hook' );
 			}
 		}
-		if ( 'off' === $user_settings_reminder_frequency ) { // If SMS notifications have been disabled, we disable cron job.
+		if ( ('off' === $wcbk_reminder_frequency && 'off' === $bc_reminder_frequency ) ) { // If SMS notifications have been disabled, we disable cron job.
 			wp_clear_scheduled_hook( 'booking_reminder_sendsms_hook' );
 		} else {
 			if ( ! wp_next_scheduled( 'booking_reminder_sendsms_hook' ) ) {
@@ -978,7 +1412,7 @@ register_uninstall_hook( __FILE__, array( 'smsalert_WC_Order_SMS', 'run_on_unins
 global $wp_version;
 if(version_compare($wp_version, '5.0.0', '>')) {
 	add_action('enqueue_block_editor_assets', function () {
-	   wp_enqueue_script( 'smsalert-gutenberg-block', plugins_url( 'js/block.js', __FILE__ ), array( 'jquery' ), SmsAlertConstants::SA_VERSION, true );
+	   wp_enqueue_script( 'smsalert-block', plugins_url( 'js/block.js', __FILE__ ), array( 'jquery' ), SmsAlertConstants::SA_VERSION, true );
 	   
 		$forms = array((object)[
 			'id'    => '',
@@ -994,14 +1428,14 @@ if(version_compare($wp_version, '5.0.0', '>')) {
 			'title' => __('Share Cart Button', 'smsalert')
 		]);
 
-		wp_localize_script('smsalert-gutenberg-block', 'smsalert_block_vars', [
+		wp_localize_script('smsalert-block', 'smsalert_block_vars', [
 			'logo'  => esc_url( SA_MOV_URL )."images/www.smsalert.co.in.png",
 			'forms' => $forms
 		]);
 	});
 
 	add_action('init', function () {
-		 register_block_type('smsalert/guten-block', array(
+		 register_block_type('smsalert-blocks/smsalert', array(
 			'render_callback' => function ($atts) {
 
 				if(empty($atts['sa_shortcode'])) {

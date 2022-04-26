@@ -1,12 +1,13 @@
-jQuery( document ).ready( function() {
+$sa  =jQuery;
+$sa( document ).ready( function() {
     
-    jQuery( '#smsalert_date_range' ).change( function() {
+    $sa( '#smsalert_date_range' ).change( function() {
       
-      var group_name  = jQuery( '#smsalert_date_range' ).val();
-        if ( jQuery(this).val() == "custom") {
+      var group_name  = $sa( '#smsalert_date_range' ).val();
+        if ( $sa(this).val() == "custom") {
           document.getElementById("sa_start_end_date_div").style.display = "block";
         }
-        if ( jQuery(this).val() != "custom" ) {
+        if ( $sa(this).val() != "custom" ) {
           document.getElementById("sa_start_end_date_div").style.display = "none";
         }
     });

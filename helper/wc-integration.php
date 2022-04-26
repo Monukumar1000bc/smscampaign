@@ -32,14 +32,7 @@ class SAShipmentIntegration {
 	 */
 	public function __construct() {
 		if ( is_plugin_active( 'ast-pro/ast-pro.php' ) ) {
-			add_filter( 'sAlertDefaultSettings', __CLASS__ . '::add_default_setting', 1 );
-			add_action( 'sa_addTabs', array( $this, 'add_tabs' ), 100 );
-
-			$smsalert_ast_notify = smsalert_get_option( 'ast_notify', 'smsalert_ast_general', 'on' );
-
-			if ( 'on' === $smsalert_ast_notify ) {
 				add_action( 'send_order_to_trackship', array( $this, 'trigger_order_trackship' ), 10, 1 );
-			}
 		}
 
 		add_filter( 'sa_wc_order_sms_customer_before_send', array( $this, 'replace_aftership_trackingno' ), 10, 2 );
@@ -59,6 +52,15 @@ class SAShipmentIntegration {
 	 * @return array
 	 */
 	public function add_tokens_wc_templates( $variables, $status ) {
+		if ( is_plugin_active( 'ast-pro/ast-pro.php' )
+		) {
+			$wc_shipment_variables = array(
+				'[shipped_item_name]'   => 'Shipped Product Name',
+				'[shipped_item_name_qty]' => 'Shipped Product Name With Quantity',
+			);
+			$variables             = array_merge( $variables, $wc_shipment_variables );
+		}
+		
 		if ( is_plugin_active( 'woocommerce-shipment-tracking/woocommerce-shipment-tracking.php' )
 			|| is_plugin_active( 'woo-advanced-shipment-tracking/woocommerce-advanced-shipment-tracking.php' )		
 			|| is_plugin_active( 'ast-pro/ast-pro.php' )
@@ -129,7 +131,6 @@ class SAShipmentIntegration {
 			|| is_plugin_active( 'ast-pro/ast-pro.php' ) ) 
 		{
 			$content = ( ! empty( $sms_data['sms_body'] ) ) ? $sms_data['sms_body'] : '';
-
 			$date_format 		= '';
 			$date_shipped       = '[date_shipped]';
 			if ( preg_match_all( '/\[date_shipped.*?\]/', $content, $matched ) ) {
@@ -151,20 +152,33 @@ class SAShipmentIntegration {
 				
 				if ( count( $tracking_items ) > 0 ) {
 					$t_info  = end( $tracking_items );
-
+					$item_with_qty = array();
+					$item_name     = array();
+                    if ( array_key_exists( 'products_list', $t_info ) ) {
+					foreach ( $t_info['products_list'] as $pdata ){
+						$item_with_qty[] = get_the_title( $pdata->product ) . ' [' . $pdata->qty . '] ';
+						$item_name[]     = get_the_title( $pdata->product );
+					}
+						$item_with_qty = implode( ',', $item_with_qty );
+						$item_name     = implode( ',', $item_name );
+					}
+					
 					$find    = array(
 						'[tracking_number]',
 						'[tracking_provider]',
 						'[tracking_link]',
 						$date_shipped,
+					    '[shipped_item_name]',
+			            '[shipped_item_name_qty]',
 					);
 					$replace = array(
 						$t_info['tracking_number'],
 						$t_info['formatted_tracking_provider'],
 						$t_info['formatted_tracking_link'],
-						//wp_date( $date_format, $t_info['date_shipped']),
+						date_i18n( $date_format, $t_info['date_shipped'] ),
+						$item_name,
+						$item_with_qty
 						
-						date_i18n( $date_format, $t_info['date_shipped'] )
 					);
 					$sms_data['sms_body'] = str_replace( $find, $replace, $content );
 				}
@@ -216,135 +230,29 @@ class SAShipmentIntegration {
 	}
 
 	/**
-	 * Add default settings to savesetting in setting-options.
-	 *
-	 * @param array $defaults defaults.
-	 *
-	 * @return array
-	 */
-	public static function add_default_setting( $defaults = array() ) {
-		$defaults['smsalert_ast_general']['ast_notify'] = 'off';
-		$defaults['smsalert_ast_message']['ast_notify'] = '';
-		return $defaults;
-	}
-
-	/**
-	 * Add tabs to smsalert settings at backend.
-	 *
-	 * @param array $tabs tabs.
-	 *
-	 * @return array
-	 */
-	public static function add_tabs( $tabs = array() ) {
-		$ast_addon__param = array(
-			'checkTemplateFor' => 'ast_addon',
-			'templates'        => self::get_ast_addon_templates(),
-		);
-
-		$tabs['woocommerce']['inner_nav']['ast_addon']['title']       = 'AST Tracking Per Item';
-		$tabs['woocommerce']['inner_nav']['ast_addon']['tab_section'] = 'astaddontemplates';
-		$tabs['woocommerce']['inner_nav']['ast_addon']['tabContent']  = $ast_addon__param;
-		$tabs['woocommerce']['inner_nav']['ast_addon']['filePath']    = 'views/message-template.php';
-		return $tabs;
-	}
-
-	/**
-	 * Get ast addon templates function.
-	 *
-	 * @return array
-	 */
-	public static function get_ast_addon_templates() {
-		$current_val       = smsalert_get_option( 'ast_notify', 'smsalert_ast_general', 'on' );
-		$checkbox_name_id  = 'smsalert_ast_general[ast_notify]';
-		$text_area_name_id = 'smsalert_ast_message[ast_notify]';
-
-		$text_body = smsalert_get_option( 'ast_notify', 'smsalert_ast_message', sprintf( 'Shipped: %1$s has been dispatched via %2$s with tracking number %3$s. Track here %4$s', '[item_name_qty]', '[tracking_provider]', '[tracking_number]', '[tracking_link]' ) );
-
-		$templates = array();
-
-		$variables = WooCommerceCheckOutForm::getvariables();
-
-		$templates['ast-addon']['title']          = 'When Tracking Information is added';
-		$templates['ast-addon']['enabled']        = $current_val;
-		$templates['ast-addon']['status']         = '';
-		$templates['ast-addon']['text-body']      = $text_body;
-		$templates['ast-addon']['checkboxNameId'] = $checkbox_name_id;
-		$templates['ast-addon']['textareaNameId'] = $text_area_name_id;
-		$templates['ast-addon']['moreoption']     = 1;
-		$templates['ast-addon']['token']          = $variables;
-
-		return $templates;
-	}
-
-	/**
 	 * Trigger order trackship function.
 	 *
 	 * @param int $order_id order_id.
 	 */
 	public function trigger_order_trackship( $order_id ) {
-
+       
 		$order       = new WC_Order( $order_id );
-		$ast_message = smsalert_get_option( 'ast_notify', 'smsalert_ast_message', '' );
+		$order_status_settings = smsalert_get_option( 'order_status', 'smsalert_general', array() );
+		$order_status = $order->get_status();
+		if ( in_array( $order_status, $order_status_settings, true )  ) {
+		$default_buyer_sms = defined( 'SmsAlertMessages::DEFAULT_BUYER_SMS_' . str_replace( ' ', '_', strtoupper( $order_status ) ) ) ? constant( 'SmsAlertMessages::DEFAULT_BUYER_SMS_' . str_replace( ' ', '_', strtoupper( $order_status ) ) ) : SmsAlertMessages::showMessage( 'DEFAULT_BUYER_SMS_STATUS_CHANGED' );
+
+		$buyer_sms_body             = smsalert_get_option( 'sms_body_' . $order_status, 'smsalert_message', $default_buyer_sms );
 
 		$order_items = $order->get_items();
 		$first_item  = current( $order_items );
 		$post_id     = $first_item['order_id'];
 		$buyer_no    = get_post_meta( $post_id, '_billing_phone', true );
 
-		$buyer_sms_data['number']   = $buyer_no;
-		$buyer_sms_data['sms_body'] = $this->parse_sms_body( $ast_message, $order, $order_id );
+		$buyer_sms_data = $this->replace_wc_advshipment_trackingno( array('sms_body'=>$buyer_sms_body), $order_id );
 		$buyer_sms_data             = WooCommerceCheckOutForm::pharse_sms_body( $buyer_sms_data, $order_id );
 		do_action( 'sa_send_sms', $buyer_no, $buyer_sms_data['sms_body'] );
-	}
-
-	/**
-	 * Parse sms body function.
-	 *
-	 * @param string $content  content.
-	 * @param object $order    object.
-	 * @param int    $order_id order_id.
-	 *
-	 * @return string
-	 */
-	public function parse_sms_body( $content, $order, $order_id ) {
-		if(is_plugin_active( 'ast-pro/ast-pro.php' )) {
-			$tracking_items = ast_get_tracking_items( $order_id );	
 		}
-		else {						
-			$ast            = new WC_Advanced_Shipment_Tracking_Actions();
-			$tracking_items = $ast->get_tracking_items( $order_id, true );	
-		}
-
-		if ( count( $tracking_items ) > 0 ) {
-			$t_info = end( $tracking_items );
-			
-			if ( array_key_exists( 'products_list', $t_info ) ) {
-				$item_with_qty = array();
-				$item_name     = array();
-				foreach ( $t_info['products_list'] as $pdata ) {
-					$item_with_qty[] = get_the_title( $pdata->product ) . ' [' . $pdata->qty . '] ';
-					$item_name[]     = get_the_title( $pdata->product );
-				}
-				$item_with_qty = implode( ',', $item_with_qty );
-				$item_name     = implode( ',', $item_name );
-			}
-		}
-
-		$find = array(
-			'[item_name]',
-			'[item_name_qty]',
-		);
-
-		$replace = array(
-			$item_name,
-			$item_with_qty,
-		);
-
-		$content                    = str_replace( $find, $replace, $content );
-		$buyer_sms_data['sms_body'] = $content;
-		$buyer_sms_data             = $this->replace_wc_advshipment_trackingno( $buyer_sms_data, $order_id );
-		$content                    = ( ( ! empty( $buyer_sms_data['sms_body'] ) ) ? $buyer_sms_data['sms_body'] : '' );
-		return $content;
 	}
 }
 

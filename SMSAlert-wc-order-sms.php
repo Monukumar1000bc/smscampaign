@@ -3,11 +3,11 @@
  * Plugin Name: SMSAlert - WooCommerce
  * Plugin URI: https://wordpress.org/plugins/sms-alert/
  * Description: This is a WooCommerce add-on. By Using this plugin admin and buyer can get notification after placing order via sms using SMS Alert.
- * Version: 3.5.3
+ * Version: 3.5.4
  * Author: Cozy Vision Technologies Pvt. Ltd.
  * Author URI: https://www.smsalert.co.in
  * WC requires at least: 2.0.0
- * WC tested up to: 6.2.1
+ * WC tested up to: 6.4.1
  * Text Domain: sms-alert
  * License: GPLv2
  */
@@ -63,7 +63,7 @@ if ( ! defined( 'CART_CRON_INTERVAL' ) ) {
 	define( 'CART_CRON_INTERVAL', 10 );// run ab cart cron every 10 min.
 }
 if ( ! defined( 'BOOKING_REMINDER_CRON_INTERVAL' ) ) {
-	define( 'BOOKING_REMINDER_CRON_INTERVAL', 60 );// run booking reminder cron every 60 min.
+	define( 'BOOKING_REMINDER_CRON_INTERVAL', 10 );// run booking reminder cron every 10 min.
 }
 // In minutes. Defines the interval at which msg function is fired.
 if ( ! defined( 'CART_STILL_SHOPPING' ) ) {
@@ -688,6 +688,8 @@ class smsalert_WC_Order_SMS {
 			id mediumint(9) NOT NULL AUTO_INCREMENT,
 			booking_id mediumint(9) NOT NULL,
 			phone VARCHAR(20),
+			source VARCHAR(50),
+			msg_sent TINYINT NOT NULL DEFAULT 0,
 			start_date DATETIME DEFAULT '0000-00-00 00:00:00',
 			PRIMARY KEY  (id)
         ) $charset_collate;";		
@@ -707,7 +709,8 @@ class smsalert_WC_Order_SMS {
 		delete_option( 'ab_cart_fc_captured_abandoned_cart_count' );
 
 		$user_settings_notification_frequency = smsalert_get_option( 'customer_notify', 'smsalert_abandoned_cart', 'on' );
-		$user_settings_reminder_frequency = smsalert_get_option( 'customer_notify', 'smsalert_wcbk_general', 'on' );
+		$wcbk_reminder_frequency = smsalert_get_option( 'customer_notify', 'smsalert_wcbk_general', 'on' );
+		$bc_reminder_frequency = smsalert_get_option( 'customer_notify', 'smsalert_bc_general', 'on' );
 
 		if ( 'off' === $user_settings_notification_frequency ) { // If SMS notifications have been disabled, we disable cron job.
 			wp_clear_scheduled_hook( 'ab_cart_notification_sendsms_hook' );
@@ -716,7 +719,7 @@ class smsalert_WC_Order_SMS {
 				wp_schedule_event( time(), 'sendsms_interval', 'ab_cart_notification_sendsms_hook' );
 			}
 		}
-		if ( 'off' === $user_settings_reminder_frequency ) { // If SMS notifications have been disabled, we disable cron job.
+		if ( ('off' === $wcbk_reminder_frequency && 'off' === $bc_reminder_frequency ) ) { // If SMS notifications have been disabled, we disable cron job.
 			wp_clear_scheduled_hook( 'booking_reminder_sendsms_hook' );
 		} else {
 			if ( ! wp_next_scheduled( 'booking_reminder_sendsms_hook' ) ) {
@@ -731,6 +734,7 @@ class smsalert_WC_Order_SMS {
 	public static function run_on_deactivate() {
 		wp_clear_scheduled_hook( 'smsalert_balance_notify' );
 		wp_clear_scheduled_hook('smsalert_followup_sms');
+		wp_clear_scheduled_hook('booking_reminder_sendsms_hook');
 	}
 
 	/**
@@ -978,7 +982,7 @@ register_uninstall_hook( __FILE__, array( 'smsalert_WC_Order_SMS', 'run_on_unins
 global $wp_version;
 if(version_compare($wp_version, '5.0.0', '>')) {
 	add_action('enqueue_block_editor_assets', function () {
-	   wp_enqueue_script( 'smsalert-gutenberg-block', plugins_url( 'js/block.js', __FILE__ ), array( 'jquery' ), SmsAlertConstants::SA_VERSION, true );
+	   wp_enqueue_script( 'smsalert-block', plugins_url( 'js/block.js', __FILE__ ), array( 'jquery' ), SmsAlertConstants::SA_VERSION, true );
 	   
 		$forms = array((object)[
 			'id'    => '',
@@ -994,14 +998,14 @@ if(version_compare($wp_version, '5.0.0', '>')) {
 			'title' => __('Share Cart Button', 'smsalert')
 		]);
 
-		wp_localize_script('smsalert-gutenberg-block', 'smsalert_block_vars', [
+		wp_localize_script('smsalert-block', 'smsalert_block_vars', [
 			'logo'  => esc_url( SA_MOV_URL )."images/www.smsalert.co.in.png",
 			'forms' => $forms
 		]);
 	});
 
 	add_action('init', function () {
-		 register_block_type('smsalert/guten-block', array(
+		 register_block_type('smsalert-blocks/smsalert', array(
 			'render_callback' => function ($atts) {
 
 				if(empty($atts['sa_shortcode'])) {

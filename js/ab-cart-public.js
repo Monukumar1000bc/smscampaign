@@ -28,23 +28,23 @@
 	* Although scripts in the WordPress core, Plugins and Themes may be
 	* practising this, we should strive to set a better example in our own work.
 	*/
-
-	jQuery(document).ready(function(){
+    $sa  =jQuery;
+	$sa(document).ready(function(){
 
 		var timer;
 
 		function getCheckoutData() { //Reading WooCommerce field values
 			if(typeof sa_otp_settings !=  'undefined' && sa_otp_settings['show_countrycode']=='on' )
 			{
-				var mob_field = jQuery("[name=billing_phone]:hidden");
+				var mob_field = $sa("[name=billing_phone]:hidden");
 			} else{
-				var mob_field = jQuery("[name=billing_phone]");
+				var mob_field = $sa("[name=billing_phone]");
 			}
 			
 			if( mob_field.length > 0 ){ //If phone number exists
 
 				var ab_cart_phone 	= mob_field.val();
-				var ab_cart_email 	= jQuery("#billing_email").val();
+				var ab_cart_email 	= $sa("#billing_email").val();
 				
 
 				if (typeof ab_cart_phone === 'undefined' || ab_cart_phone === null) { //If phone number field does not exist on the Checkout form
@@ -55,31 +55,31 @@
 
 				if (ab_cart_phone.length >= 1){ //Checking if the phone number is longer than 1 digit
 					//If Phone valid
-					var ab_cart_name 				= jQuery("#billing_first_name").val();
-					var ab_cart_nonce 				= jQuery("#smsalert_abcart_nonce").val();
-					var ab_cart_surname 			= jQuery("#billing_last_name").val();
+					var ab_cart_name 				= $sa("#billing_first_name").val();
+					var ab_cart_nonce 				= $sa("#smsalert_abcart_nonce").val();
+					var ab_cart_surname 			= $sa("#billing_last_name").val();
 					var ab_cart_phone 				= mob_field.val();
-					var ab_cart_country 			= jQuery("#billing_country").val();
-					var ab_cart_city 				= jQuery("#billing_city").val();
+					var ab_cart_country 			= $sa("#billing_country").val();
+					var ab_cart_city 				= $sa("#billing_city").val();
 
 					//Other fields used for "Remember user input" function
-					var ab_cart_billing_company 	= jQuery("#billing_company").val();
-					var ab_cart_billing_address_1 	= jQuery("#billing_address_1").val();
-					var ab_cart_billing_address_2 	= jQuery("#billing_address_2").val();
-					var ab_cart_billing_state 		= jQuery("#billing_state").val();
-					var ab_cart_billing_postcode 	= jQuery("#billing_postcode").val();
-					var ab_cart_shipping_first_name = jQuery("#shipping_first_name").val();
-					var ab_cart_shipping_last_name 	= jQuery("#shipping_last_name").val();
-					var ab_cart_shipping_company 	= jQuery("#shipping_company").val();
-					var ab_cart_shipping_country 	= jQuery("#shipping_country").val();
-					var ab_cart_shipping_address_1 	= jQuery("#shipping_address_1").val();
-					var ab_cart_shipping_address_2 	= jQuery("#shipping_address_2").val();
-					var ab_cart_shipping_city 		= jQuery("#shipping_city").val();
-					var ab_cart_shipping_state 		= jQuery("#shipping_state").val();
-					var ab_cart_shipping_postcode 	= jQuery("#shipping_postcode").val();
-					var ab_cart_order_comments 		= jQuery("#order_comments").val();
-					var ab_cart_create_account 		= jQuery("#createaccount");
-					var ab_cart_ship_elsewhere 		= jQuery("#ship-to-different-address-checkbox");
+					var ab_cart_billing_company 	= $sa("#billing_company").val();
+					var ab_cart_billing_address_1 	= $sa("#billing_address_1").val();
+					var ab_cart_billing_address_2 	= $sa("#billing_address_2").val();
+					var ab_cart_billing_state 		= $sa("#billing_state").val();
+					var ab_cart_billing_postcode 	= $sa("#billing_postcode").val();
+					var ab_cart_shipping_first_name = $sa("#shipping_first_name").val();
+					var ab_cart_shipping_last_name 	= $sa("#shipping_last_name").val();
+					var ab_cart_shipping_company 	= $sa("#shipping_company").val();
+					var ab_cart_shipping_country 	= $sa("#shipping_country").val();
+					var ab_cart_shipping_address_1 	= $sa("#shipping_address_1").val();
+					var ab_cart_shipping_address_2 	= $sa("#shipping_address_2").val();
+					var ab_cart_shipping_city 		= $sa("#shipping_city").val();
+					var ab_cart_shipping_state 		= $sa("#shipping_state").val();
+					var ab_cart_shipping_postcode 	= $sa("#shipping_postcode").val();
+					var ab_cart_order_comments 		= $sa("#order_comments").val();
+					var ab_cart_create_account 		= $sa("#createaccount");
+					var ab_cart_ship_elsewhere 		= $sa("#ship-to-different-address-checkbox");
 					if(ab_cart_create_account.is(':checked')){
 						ab_cart_create_account = 1;
 					}else{
@@ -121,7 +121,7 @@
 					}
 
 					timer = setTimeout(function(){
-							jQuery.post(ab_cart_checkout_form_data.ajaxurl, data, //Ajaxurl coming from localized script and contains the link to wp-admin/admin-ajax.php file that handles AJAX requests on Wordpress
+							$sa.post(ab_cart_checkout_form_data.ajaxurl, data, //Ajaxurl coming from localized script and contains the link to wp-admin/admin-ajax.php file that handles AJAX requests on Wordpress
 							function(response) {
 								//console.log(response);
 								//If we have successfully captured abandoned cart, we do not have to display Exit intent form anymore
@@ -142,7 +142,7 @@
 			}
 		}
 
-		jQuery("#billing_email, #billing_phone, input.input-text, input.input-checkbox, textarea.input-text").on("keyup keypress change", getCheckoutData ); //All action happens on or after changing Phone fields or any other fields in the Checkout form. All Checkout form input fields are now triggering plugin action. Data saved to Database only after Phone fields have been entered.
-		jQuery(window).on("load", getCheckoutData ); //Automatically collect and save input field data if input fields already filled on page load
+		$sa("#billing_email, #billing_phone, input.input-text, input.input-checkbox, textarea.input-text").on("keyup keypress change", getCheckoutData ); //All action happens on or after changing Phone fields or any other fields in the Checkout form. All Checkout form input fields are now triggering plugin action. Data saved to Database only after Phone fields have been entered.
+		$sa(window).on("load", getCheckoutData ); //Automatically collect and save input field data if input fields already filled on page load
 	});
-})( jQuery );
+})( $sa );

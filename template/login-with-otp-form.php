@@ -4,12 +4,12 @@
  *
  * @package Template
  */
-
+$redirect = isset($_GET['redirect_to'])?$_GET['redirect_to']:$_SERVER['REQUEST_URI'];
 ?>
 <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
     <label for="username"><?php esc_html_e('Mobile Number', 'sms-alert'); ?><span class="required">*</span></label>
     <input type="tel" class="woocommerce-Input woocommerce-Input--text input-text sa_mobileno phone-valid" name="username"  value="">
-    <input type="hidden" class="woocommerce-Input woocommerce-Input--text input-text" name="redirect" value="<?php echo isset($_SERVER['REQUEST_URI']) ? esc_url_raw($_SERVER['REQUEST_URI']) : ''; ?>">
+    <input type="hidden" class="woocommerce-Input woocommerce-Input--text input-text" name="redirect" value="<?php echo $redirect; ?>">
 </p>
 
 <p class="form-row">

@@ -1,8 +1,9 @@
-jQuery(document).ready( function($) {
+$sa  =jQuery;
+$sa(document).ready( function($) {
 
 	// if device is mobile.
 	if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-	    jQuery('body').addClass( 'mobile-device' );
+	    $sa('body').addClass( 'mobile-device' );
 	}
 
 	var deactivate_url = '';
@@ -15,38 +16,38 @@ jQuery(document).ready( function($) {
 
 		add_deactivate_slugs_callback( smsf.current_supported_slug );
 
-		jQuery( document ).on( 'change','.on-boarding-radio-field' ,function(e){
+		$sa( document ).on( 'change','.on-boarding-radio-field' ,function(e){
 
 			e.preventDefault();
-			if ( 'other' == jQuery( this ).attr( 'id' ) ) {
-				jQuery( '#deactivation-reason-text' ).removeClass( 'smsf-keep-hidden' );
+			if ( 'other' == $sa( this ).attr( 'id' ) ) {
+				$sa( '#deactivation-reason-text' ).removeClass( 'smsf-keep-hidden' );
 			} else {
-				jQuery( '#deactivation-reason-text' ).addClass( 'smsf-keep-hidden' );
+				$sa( '#deactivation-reason-text' ).addClass( 'smsf-keep-hidden' );
 			}
 		});
 	}
 
 	// Close Button Click.
-	jQuery( document ).on( 'click','.smsf-on-boarding-close-btn a',function(e){
+	$sa( document ).on( 'click','.smsf-on-boarding-close-btn a',function(e){
 		e.preventDefault();
 		smsf_hide_onboard_popup();
 	});
 
 	// Skip and deactivate.
-	jQuery( document ).on( 'click','.smsf-deactivation-no_thanks',function(e){
+	$sa( document ).on( 'click','.smsf-deactivation-no_thanks',function(e){
 
 		window.location.replace( deactivate_url );
 		smsf_hide_onboard_popup();
 	});
 
 	// Submitting Form.
-	jQuery( document ).on( 'submit','form.smsf-on-boarding-form',function(e){
+	$sa( document ).on( 'submit','form.smsf-on-boarding-form',function(e){
 
-		jQuery('.smsf-on-boarding-submit').addClass('button--loading').attr('disabled',true);
+		$sa('.smsf-on-boarding-submit').addClass('button--loading').attr('disabled',true);
 		e.preventDefault();
-		var form_data = jQuery( 'form.smsf-on-boarding-form' ).serializeArray(); 
+		var form_data = $sa( 'form.smsf-on-boarding-form' ).serializeArray(); 
 
-		jQuery.ajax({
+		$sa.ajax({
             type: 'post',
             dataType: 'json',
             url: smsf.ajaxurl,
@@ -56,32 +57,32 @@ jQuery(document).ready( function($) {
                 form_data: form_data,  
             },
             success: function( msg ){
-            	jQuery( document ).find('#smsf_wgm_loader').hide();
+            	$sa( document ).find('#smsf_wgm_loader').hide();
         		if( 'plugins.php' == smsf.current_screen ) {
 					window.location.replace( deactivate_url );
 				}
                 smsf_hide_onboard_popup();
-				jQuery('.smsf-on-boarding-submit').removeClass('button--loading').attr('disabled',false);
+				$sa('.smsf-on-boarding-submit').removeClass('button--loading').attr('disabled',false);
             }
         });
 	});
 
 	// Open Popup.
 	function smsf_show_onboard_popup() {
-		jQuery( '.smsf-onboarding-section' ).show();
-		jQuery( '.smsf-on-boarding-wrapper-background' ).addClass( 'onboard-popup-show' );
+		$sa( '.smsf-onboarding-section' ).show();
+		$sa( '.smsf-on-boarding-wrapper-background' ).addClass( 'onboard-popup-show' );
 
-	    if( ! jQuery( 'body' ).hasClass( 'mobile-device' ) ) {
-	    	jQuery( 'body' ).addClass( 'smsf-on-boarding-wrapper-control' );
+	    if( ! $sa( 'body' ).hasClass( 'mobile-device' ) ) {
+	    	$sa( 'body' ).addClass( 'smsf-on-boarding-wrapper-control' );
 	    }
 	}
 
 	// Close Popup.
 	function smsf_hide_onboard_popup() {
-		jQuery( '.smsf-on-boarding-wrapper-background' ).removeClass( 'onboard-popup-show' );
-		jQuery( '.smsf-onboarding-section' ).hide();
-		if( ! jQuery( 'body' ).hasClass( 'mobile-device' ) ) {
-	    	jQuery( 'body' ).removeClass( 'smsf-on-boarding-wrapper-control' );
+		$sa( '.smsf-on-boarding-wrapper-background' ).removeClass( 'onboard-popup-show' );
+		$sa( '.smsf-onboarding-section' ).hide();
+		if( ! $sa( 'body' ).hasClass( 'mobile-device' ) ) {
+	    	$sa( 'body' ).removeClass( 'smsf-on-boarding-wrapper-control' );
 	    }
 	}
 
@@ -90,16 +91,16 @@ jQuery(document).ready( function($) {
 		
 		for ( var i = all_slugs.length - 1; i >= 0; i-- ) {
 
-			jQuery( document ).on( 'click', '#deactivate-' + all_slugs[i] ,function(e){
+			$sa( document ).on( 'click', '#deactivate-' + all_slugs[i] ,function(e){
 				e.preventDefault();
-				deactivate_url = jQuery( this ).attr( 'href' );
-				plugin_name = jQuery( this ).attr( 'aria-label' );
-				jQuery( '#plugin-name' ).val( plugin_name.replace( 'Deactivate ', '' ) );
+				deactivate_url = $sa( this ).attr( 'href' );
+				plugin_name = $sa( this ).attr( 'aria-label' );
+				$sa( '#plugin-name' ).val( plugin_name.replace( 'Deactivate ', '' ) );
 				plugin_name = plugin_name.replace( 'Deactivate ', '' );
-				jQuery( '#plugin-name' ).val( plugin_name );
-				jQuery( '.smsf-on-boarding-heading' ).text( plugin_name + ' Feedback' );
-				var placeholder = jQuery( '#deactivation-reason-text' ).attr( 'placeholder' );
-				jQuery( '#deactivation-reason-text' ).attr( 'placeholder', placeholder.replace( '{plugin-name}', plugin_name ) );
+				$sa( '#plugin-name' ).val( plugin_name );
+				$sa( '.smsf-on-boarding-heading' ).text( plugin_name + ' Feedback' );
+				var placeholder = $sa( '#deactivation-reason-text' ).attr( 'placeholder' );
+				$sa( '#deactivation-reason-text' ).attr( 'placeholder', placeholder.replace( '{plugin-name}', plugin_name ) );
 				smsf_show_onboard_popup();
 			});
 		}
@@ -107,11 +108,11 @@ jQuery(document).ready( function($) {
 
 	// Add deactivate id in all the plugins links.
 	function embed_id_to_deactivation_urls() {
-		jQuery( 'a' ).each(function(){
-		    if ( 'Deactivate' == jQuery(this).text() && 0 < jQuery(this).attr( 'href' ).search( 'action=deactivate' ) ) {
-		    	if( 'undefined' == typeof jQuery(this).attr( 'id' ) ) {
-			    	var slug = jQuery(this).closest( 'tr' ).attr( 'data-slug' );
-			    	jQuery(this).attr( 'id', 'deactivate-' + slug );
+		$sa( 'a' ).each(function(){
+		    if ( 'Deactivate' == $sa(this).text() && 0 < $sa(this).attr( 'href' ).search( 'action=deactivate' ) ) {
+		    	if( 'undefined' == typeof $sa(this).attr( 'id' ) ) {
+			    	var slug = $sa(this).closest( 'tr' ).attr( 'data-slug' );
+			    	$sa(this).attr( 'id', 'deactivate-' + slug );
 		    	}
 		    }
 		});	

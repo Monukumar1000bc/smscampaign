@@ -515,16 +515,16 @@ class ContactForm7 extends FormInterface {
 	 * @return string
 	 */
 	public function cf7_phone_shortcode() {
-		$html  = '<script>jQuery(window).on(\'load\', function(){	$sa=jQuery;$sa(".smsalert_cf7_otp_btn,#smsalert_customer_validation_otp_token").unbind().click(function(o){';
-		$html .= ' var target = $sa(this); var e=target.parents("form").find("input[name=' . $this->phone_field_key . ']").val();
+		$html  = '<script>jQuery(window).on(\'load\', function(){	jQuery(".smsalert_cf7_otp_btn,#smsalert_customer_validation_otp_token").unbind().click(function(o){';
+		$html .= ' var target = jQuery(this); var e=target.parents("form").find("input[name=' . $this->phone_field_key . ']").val();
 		target.parents("form").find("#salert_message").empty(),target.parents("form").find("#salert_message").append("Loading..!Please wait"),';
-		$html .= 'target.parents("form").find("#salert_message").show(),$sa.ajax({url:"' . site_url() . '/?option=smsalert-cf7-contact",type:"POST",data:{user_phone:e},';
+		$html .= 'target.parents("form").find("#salert_message").show(),jQuery.ajax({url:"' . site_url() . '/?option=smsalert-cf7-contact",type:"POST",data:{user_phone:e},';
 		$html .= 'crossDomain:!0,dataType:"json",success:function(o){
 			if(o.result=="success"){target.parents("form").find("#salert_message").empty(),';
 		$html .= 'target.parents("form").find("#salert_message").append(o.message),target.parents("form").find("#salert_message").css("border-top","3px solid green"),';
 		$html .= 'target.parents("form").find("input[name=email_verify]").focus()}else{target.parents("form").find("#salert_message").empty(),target.parents("form").find("#salert_message").append(o.message),';
 		$html .= 'target.parents("form").find("#salert_message").css("border-top","3px solid red"),target.parents("form").find("input[name=smsalert_customer_validation_otp_token]").focus()} ;},';
-		$html .= 'error:function(o,e,n){console.log("error"+o)}})});$sa("[name=smsalert_customer_validation_otp_token]").on("change",function(){ $sa(this).find("#salert_message").empty().css("border-top","none")});});</script>';
+		$html .= 'error:function(o,e,n){console.log("error"+o)}})});jQuery("[name=smsalert_customer_validation_otp_token]").on("change",function(){ jQuery(this).find("#salert_message").empty().css("border-top","none")});});</script>';
 
 		return $html;
 	}

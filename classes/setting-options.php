@@ -687,7 +687,7 @@ class smsalert_Setting_Options {
 									{
 										if ( ! is_array( $groups['description'] ) || array_key_exists( 'desc', $groups['description'] ) ) {
 											?>
-											<option value="0"><?php esc_attr_e( 'SELECT', 'sms-alert' ); ?></option>
+											<option value=""><?php esc_attr_e( 'SELECT', 'sms-alert' ); ?></option>
 											<?php
 										} else {
 											foreach ( $groups['description'] as $group ) {
@@ -704,7 +704,7 @@ class smsalert_Setting_Options {
 										?>
 										<a href="javascript:void(0)" onclick="create_group(this);" id="create_group" data-parent_id="smsalert_general[auto_sync]" style="text-decoration: none;"><?php esc_attr_e( 'Create Group', 'sms-alert' ); ?></a>
 										<?php
-									} elseif ( 'on' === $auto_sync && '0' !== $group_auto_sync ) {
+									} elseif ( 'on' === $auto_sync && '' !== $group_auto_sync && '0' !== $group_auto_sync ) {
 										?>
 										<input type="button" id="smsalert_sync_btn" data-parent_id="smsalert_general[auto_sync]" onclick="doSASyncNow(this)" class="button button-primary" value="Sync Now" disabled>
 										<?php
@@ -766,7 +766,7 @@ class smsalert_Setting_Options {
 									<td>
 									<?php
 									if ( $islogged ) {
-										echo '<h2><strong>SMS Credits</strong></h2>';
+										echo '<h2><strong>'.__( 'SMS Credits', 'sms-alert' ).'</strong></h2>';
 										foreach ( $credits['description']['routes'] as $credit ) {
 											?>
 										<div class="col-lg-12 creditlist" >

@@ -59,14 +59,13 @@ if (! SmsAlertUtility::isBlank($user_email) ) {
 						<style> .sa_customer_validation-modal{ display: block !important; } </style>
 						<script>
 							jQuery(document).ready(function() {
-							    $sa = jQuery;
-							    $sa("#send_otp").click(function(o) {
+							    jQuery("#send_otp").click(function(o) {
 									if( typeof sa_otp_settings !=  "undefined" && sa_otp_settings["show_countrycode"] == "on" ){
-										var e = $sa("input:hidden[name=sa_phone_number]").val();
+										var e = jQuery("input:hidden[name=sa_phone_number]").val();
 									} else {
-										var e = $sa("input[name=sa_phone_number]").val();
+										var e = jQuery("input[name=sa_phone_number]").val();
 									}
-							        $sa("#salert_message").empty(), $sa("#salert_message").append("' . wp_kses_post($img) . '"), $sa("#salert_message").show(), $sa.ajax({
+							        jQuery("#salert_message").empty(), jQuery("#salert_message").append("' . wp_kses_post($img) . '"), jQuery("#salert_message").show(), jQuery.ajax({
 							            url: "' . esc_attr(site_url()) . '/?option=smsalert-ajax-otp-generate",
 							            type: "POST",
 							            data: {billing_phone:e},
@@ -74,28 +73,28 @@ if (! SmsAlertUtility::isBlank($user_email) ) {
 							            dataType: "json",
 							            success: function(o) {
 							                if (o.result == "success") {
-							                    $sa("#salert_message").empty(), $sa("#salert_message").append(o.message), 
-							                    $sa("#salert_message").css("background-color", "#8eed8e"), 
-							                    $sa("#validate_otp").show(), $sa("#send_otp").val("Resend OTP"), 
-							                    $sa("#sa_validate_otp").show(), $sa("input[name=sa_validate_otp]").focus()
+							                    jQuery("#salert_message").empty(), jQuery("#salert_message").append(o.message), 
+							                    jQuery("#salert_message").css("background-color", "#8eed8e"), 
+							                    jQuery("#validate_otp").show(), jQuery("#send_otp").val("Resend OTP"), 
+							                    jQuery("#sa_validate_otp").show(), jQuery("input[name=sa_validate_otp]").focus()
 							                } else {
-							                    $sa("#salert_message").empty(), $sa("#salert_message").append(o.message), 
-							                    $sa("#salert_message").css("background-color", "#eda58e"), 
-							                    $sa("input[name=sa_phone_number]").focus()
+							                    jQuery("#salert_message").empty(), jQuery("#salert_message").append(o.message), 
+							                    jQuery("#salert_message").css("background-color", "#eda58e"), 
+							                    jQuery("input[name=sa_phone_number]").focus()
 							                };
 							            },
 							            error: function(o, e, n) {}
 							        })
 							    });
-								$sa("#validate_otp").click(function(o) {
-							        var e = $sa("input[name=smsalert_customer_validation_otp_token]").val();
+								jQuery("#validate_otp").click(function(o) {
+							        var e = jQuery("input[name=smsalert_customer_validation_otp_token]").val();
 									if( typeof sa_otp_settings !=  "undefined" && sa_otp_settings["show_countrycode"] == "on" ){
-										var f = $sa("input:hidden[name=sa_phone_number]").val();
+										var f = jQuery("input:hidden[name=sa_phone_number]").val();
 									} else {
-										var f = $sa("input[name=sa_phone_number]").val();
+										var f = jQuery("input[name=sa_phone_number]").val();
 									}
-							        var r = $sa("input[name=redirect_to]").val();
-							        $sa("#salert_message").empty(), $sa("#salert_message").append("' . wp_kses_post($img) . '"), $sa("#salert_message").show(), $sa.ajax({
+							        var r = jQuery("input[name=redirect_to]").val();
+							        jQuery("#salert_message").empty(), jQuery("#salert_message").append("' . wp_kses_post($img) . '"), jQuery("#salert_message").show(), jQuery.ajax({
 							            url: "' . esc_attr(site_url()) . '/?option=smsalert-ajax-otp-validate",
 							            type: "POST",
 							            data: {smsalert_customer_validation_otp_token: e,billing_phone:f,redirect_to:r},
@@ -103,11 +102,11 @@ if (! SmsAlertUtility::isBlank($user_email) ) {
 							            dataType: "json",
 							            success: function(o) {
 							                if (o.result == "success") {
-							                    $sa("#salert_message").empty(), $sa("#salert_message").append(o.message), $sa("#validate_phone").remove(), $sa("#validate_otp_form").submit()
+							                    jQuery("#salert_message").empty(), jQuery("#salert_message").append(o.message), jQuery("#validate_phone").remove(), jQuery("#validate_otp_form").submit()
 							                } else {
-							                    $sa("#salert_message").empty(), $sa("#salert_message").append(o.message), 
-							                    $sa("#salert_message").css("background-color", "#eda58e"), 
-							                    $sa("input[name=validate_otp]").focus()
+							                    jQuery("#salert_message").empty(), jQuery("#salert_message").append(o.message), 
+							                    jQuery("#salert_message").css("background-color", "#eda58e"), 
+							                    jQuery("input[name=validate_otp]").focus()
 							                };
 							            },
 							            error: function(o, e, n) {}

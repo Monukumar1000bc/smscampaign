@@ -1,7 +1,7 @@
 (function($){
 	'use strict';
-	 
-	jQuery(document).ready(function(){
+	$sa  =jQuery; 
+	$sa(document).ready(function(){
 	 	var timer;
 	 	var timePeriod = cart_exit_intent_data.hours; //Time period in hours
 
@@ -47,8 +47,8 @@
 	 	}
 
 		function getExitIntentMobile() {
-			var cart_mobile = jQuery('#cart-exit-intent-mobile').val();
-			var smsalert_abcart_nonce = jQuery('#smsalert_abcart_nonce').val();
+			var cart_mobile = $sa('#cart-exit-intent-mobile').val();
+			var smsalert_abcart_nonce = $sa('#smsalert_abcart_nonce').val();
 			
 			clearTimeout(timer);
 			
@@ -62,12 +62,12 @@
 
 				timer = setTimeout(function(){
 					if(cart_exit_intent_data.is_user_logged_in){ //If the user is not logged in
-						jQuery.post(cart_exit_intent_data.ajaxurl, data, //Ajaxurl coming from localized script and contains the link to wp-admin/admin-ajax.php file that handles AJAX requests on Wordpress
+						$sa.post(cart_exit_intent_data.ajaxurl, data, //Ajaxurl coming from localized script and contains the link to wp-admin/admin-ajax.php file that handles AJAX requests on Wordpress
 						function(response) {
 							//console.log(response);
 						});
 					}else{ //If the user is logged in
-						jQuery.post(cart_exit_intent_data.ajaxurl, data, //Ajaxurl coming from localized script and contains the link to wp-admin/admin-ajax.php file that handles AJAX requests on Wordpress
+						$sa.post(cart_exit_intent_data.ajaxurl, data, //Ajaxurl coming from localized script and contains the link to wp-admin/admin-ajax.php file that handles AJAX requests on Wordpress
 						function(response) {
 							//console.log(response);
 						});
@@ -84,13 +84,13 @@
 				cart_insert: 	true
 			}
 			if($('#cart-exit-intent-form').length <= 0){ //If Exit intent HTML does not exist on page
-				jQuery.post(cart_exit_intent_data.ajaxurl, data, //Ajaxurl coming from localized script and contains the link to wp-admin/admin-ajax.php file that handles AJAX requests on Wordpress
+				$sa.post(cart_exit_intent_data.ajaxurl, data, //Ajaxurl coming from localized script and contains the link to wp-admin/admin-ajax.php file that handles AJAX requests on Wordpress
 				function(response){ //Response consists of HTML
 					var output = response;
 					$('body').append(output); //Adding Exit Intent form to the footer
 					//Binding these functions once again since HTML added by Ajax is new
-					jQuery('#cart-exit-intent-mobile').on('keyup keypress change', getExitIntentMobile ); //All action happens on or after changing Mobile field. Data saved to Database only after Mobile fields have been entered.
-					jQuery('#cart-exit-intent-close, #cart-exit-intent-form-backdrop').on('click', closeExitIntentForm ); //Close Exit intent window
+					$sa('#cart-exit-intent-mobile').on('keyup keypress change', getExitIntentMobile ); //All action happens on or after changing Mobile field. Data saved to Database only after Mobile fields have been entered.
+					$sa('#cart-exit-intent-close, #cart-exit-intent-form-backdrop').on('click', closeExitIntentForm ); //Close Exit intent window
 				});
 			}
 
@@ -103,7 +103,7 @@
 				cart_remove: 	true
 			}
 			if($('#cart-exit-intent-form').length > 0){ //If Exit intent HTML exists on page
-				jQuery.post(cart_exit_intent_data.ajaxurl, data, //Ajaxurl coming from localized script and contains the link to wp-admin/admin-ajax.php file that handles AJAX requests on Wordpress
+				$sa.post(cart_exit_intent_data.ajaxurl, data, //Ajaxurl coming from localized script and contains the link to wp-admin/admin-ajax.php file that handles AJAX requests on Wordpress
 				function(response){
 					if(response.data == 'true'){ //If the cart is empty - removing exit intent HTML
 						$('#cart-exit-intent-form').remove();
@@ -121,7 +121,7 @@
 		function checkIfTouchEnabled(event){		
 			if( event.type == 'touchstart'){
 				localStorage.setItem('cart_touch_device', true);
-				jQuery(document).off('touchstart', checkIfTouchEnabled ); //Removing checking if we are on touch device in case we find it out
+				$sa(document).off('touchstart', checkIfTouchEnabled ); //Removing checking if we are on touch device in case we find it out
 			}
 		}
 
@@ -205,12 +205,12 @@
 		}
 		startExitIntentBack();
 
-		jQuery(document).on('mouseleave', showExitIntentForm); //Displaying Exit intent if the mouse leaves the window
-		jQuery('#cart-exit-intent-mobile').on('keyup keypress change', getExitIntentMobile ); //All action happens on or after changing Mobile field. Data saved to Database only after Mobile fields have been entered.
-		jQuery('#cart-exit-intent-close, #cart-exit-intent-form-backdrop').on('click', closeExitIntentForm ); //Close Exit intent window
-		jQuery(document).on('added_to_cart', insertExitIntentForm ); //Calling Exit Intent form function output if Add to Cart button is pressed
-		jQuery(document).on('removed_from_cart', removeExitIntentFormIfEmptyCart ); //Firing the function if item is removed from cart via Ajax 
-		jQuery(document).on('touchstart', checkIfTouchEnabled );
-		jQuery(document).on('scroll', checkScrollDirection ); //Binding function to scroll event
+		$sa(document).on('mouseleave', showExitIntentForm); //Displaying Exit intent if the mouse leaves the window
+		$sa('#cart-exit-intent-mobile').on('keyup keypress change', getExitIntentMobile ); //All action happens on or after changing Mobile field. Data saved to Database only after Mobile fields have been entered.
+		$sa('#cart-exit-intent-close, #cart-exit-intent-form-backdrop').on('click', closeExitIntentForm ); //Close Exit intent window
+		$sa(document).on('added_to_cart', insertExitIntentForm ); //Calling Exit Intent form function output if Add to Cart button is pressed
+		$sa(document).on('removed_from_cart', removeExitIntentFormIfEmptyCart ); //Firing the function if item is removed from cart via Ajax 
+		$sa(document).on('touchstart', checkIfTouchEnabled );
+		$sa(document).on('scroll', checkScrollDirection ); //Binding function to scroll event
 	});
-})(jQuery);
+})($sa);

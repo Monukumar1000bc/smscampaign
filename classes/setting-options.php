@@ -172,7 +172,7 @@ class smsalert_Setting_Options {
 		add_submenu_page( null, 'Abandoned Carts', __( 'Abandoned Carts', 'sms-alert' ), 'manage_options', 'ab-cart', array( 'SA_Cart_Admin', 'display_page' ) );
 		add_submenu_page( null, 'Abandoned Carts', __( 'Abandoned Carts', 'sms-alert' ), 'manage_options', 'ab-cart-reports', array( 'SA_Cart_Admin', 'display_reports_page' ) );
 		
-		add_submenu_page( null, 'Booking Calendar', __( 'Booking Calendar', 'sms-alert' ), 'manage_options', 'booking-reminder', array( 'smsalert_WC_Order_SMS', 'display_page' ) );
+		add_submenu_page( null, 'Booking Calendar', __( 'Booking Calendar', 'sms-alert' ), 'manage_options', 'booking-reminder', array( 'SAReminderlist', 'display_page' ) );
 		
 		add_submenu_page( 'wpbc', __( 'Bookings Listing', 'wpbc' ), __( 'SMS Alert', 'wpbc' ), 'manage_options', 'wpbc', __CLASS__ . '::settings_tab' );
 		

@@ -1,34 +1,28 @@
 <?php
-function data_phone()
-{
-    if (!empty($_GET['dogl-names'])) {
-        $selected = $_GET['dogl-names'];
-
-
-        $args = array(
-            'status' => array($selected),
-        );
-    } else {
-        $args = array();
-    }
-
-
-    $orders = wc_get_orders($args);
-
-    $temp_array = array();
-    foreach ($orders as $key => $order) {
-        $phone = $order->get_billing_phone();
-        $temp_array[] = $phone;
-    }
-
-    $shortdata = (array_unique($temp_array));
-    return $shortdata;
-}
 
 function subscriber_page_smscampain()
 {
+    	$username = smsalert_get_option('smsalert_name', 'smsalert_gateway');
+            $password = smsalert_get_option('smsalert_password', 'smsalert_gateway');
+            $result    = SmsAlertcURLOTP::get_templates( $username, $password );
+            $templates = (array)json_decode( $result, true );
+            //   SmsAlertcURLOTP::sendsms($shortdata);
+            $result = SmsAlertcURLOTP::get_senderids($username, $password);
+            $arr = json_decode($result, true);
+            $senderids = ($arr['description']);
 
+            $credits = json_decode(SmsAlertcURLOTP::get_credits(), true);
+
+            $cred = ($credits['description']['routes']);
+			
+				
+        // senderid
+       
+				
+        //templates 
+				
 ?>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <style>
         .wp-core-ui select {
             width: 100px !important;
@@ -50,98 +44,60 @@ function subscriber_page_smscampain()
         <h1 style="font-size: 2em;color: #504d4d;font-weight: 400;text-align: left;margin-bottom: 0.5em;margin-top: 0;border-radius: 4px;padding: 10px;background: #F0F0F1;width: 100%;">SMS CAMPAIGN</h1>
         <!-- SEARCH DATA -->
         <div style=" display: flex;flex-direction: column;flex-wrap: wrap;">
-        <?php
-    if (empty($_GET['dogl-names'])) { ?>
-            <form action="" method="GET" for="dogl-names>
+            <div id="select_section" style="display: block;">
+            <form action="" method="POST" id="reset">
 
-                <p class="ptomato">
-                    <label>
-                        Select Event<br>
-                <select name="dogl-names" style=" color: inherit;font: inherit;margin: 0;margin-top: 0.5em;width: 100% !important;">
+            <p class="ptomato">
+        <label>Select Event<br>
+            <select name="dogl-names" id="dogl_names" style=" color: inherit;font: inherit;margin: 0;margin-top: 0.5em;width: 100% !important;">
                 <option value="" disabled selected>Slect Data...</option>
                 <option value="shop_order">All Customer </option>
                 <option value="wc-processing">processing data</option>
                 <option value="wc-on-hold">on-hold data</option>
                 <option value="wc-cancelled">Cancelled data</option>
                 <option value="wc-complete">Completed data</option>
-                        </select>
-                    </label>
+             </select>
+         </label>
                 </p>
+               
                 <p class="ptomato">
-                <input type="hidden" name="page" value="all-smscampain">
-                <input type="submit" name="submit" value="Search data" style=" display: inline-block;padding: 8px 12px;color: #ffff;background-color: #2271B1;border: 1px solid #F0F0F1;border-radius: 5px;cursor: pointer;transition: all 300ms ease;box-shadow: 0px 0px 0px 0px #2271b1eb;">
+                <!-- <input type="hidden" name="page" value="all-smscampain"> -->
+               <button type="button" onclick="select_data()" id="btn" style=" display: inline-block;padding: 6px 10px;color: #ffff;font: inherit;background-color: #2271B1;border: 1px solid #F0F0F1;border-radius: 5px;cursor: pointer;transition: all 300ms ease;box-shadow: 0px 0px 0px 0px #2271b1eb;">SearchData</button>
                 </p>
-
-            </form>
-            <?php
-    }
-
-    if (!empty($_REQUEST['submit']) && $_REQUEST['submit'] == 'Search data') {
-        $selected = $_GET['dogl-names'];
-        $val = data_phone();
-        $shortcountdata = count($val);
-        ?><div style="display:flex"><?php
-        echo '<h3 style ="color:#504d4d;">Total record : ' . $shortcountdata . '</h3>'; ?>
-        <a href='admin.php?page=all-smscampain&action=all-smscampain' style="margin-top:20px; margin-left:10px;"> modify search </a>
-          </div>
-        <?php
-     
-    }?>
-        </div>
-            <!-- /SEARCH DATA -->
-            <!-- SENDBOX -->
-            <?php
-            if (!empty($_GET['dogl-names'])) { ?>
-            <form action="" method="POST">
-            <?php
-
-            $username = smsalert_get_option('smsalert_name', 'smsalert_gateway');
-            $password = smsalert_get_option('smsalert_password', 'smsalert_gateway');
-            $result    = SmsAlertcURLOTP::get_templates( $username, $password );
-            $templates = (array)json_decode( $result, true );
-            //   SmsAlertcURLOTP::sendsms($shortdata);
-            $result = SmsAlertcURLOTP::get_senderids($username, $password);
-            $arr = json_decode($result, true);
-            $senderids = ($arr['description']);
-
-            $credits = json_decode(SmsAlertcURLOTP::get_credits(), true);
-
-            $cred = ($credits['description']['routes']);
-            ?>
-                <div style="margin-bottom: 1em;  display: flex;flex-direction: column;flex-wrap: wrap;">
+                </div>
+                <div style="display:flex">
+                <h3 style ="color:#504d4d;">Total record : <span class="trecord">0</span></h3> 
+                <a href="javascript:void(0)" style="margin-top:20px; margin-left:10px; display:none;" id="backtosearch"> modify search </a>
+                </div>
+          <div  id="sendbox_section" style="margin-bottom: 1em;  display: flex;flex-direction: column;flex-wrap: wrap; display: none;">
                     <p class="ptomato">
                         <label>
                         SMS Alert Senderid:<br>
-                        <select style=" color: inherit;font: inherit;margin: 0;margin-top: 0.5em;width: 100% !important;">
-                        <?php
-                    foreach ($senderids as $key => $senderid) {
-                        $boards = $senderid['Senderid']['sender'];
+                        <select id="senderid_section" style=" color: inherit;font: inherit;margin: 0;margin-top: 0.5em;width: 100% !important;">
+                          
+                   <?php
+                        foreach ($senderids as $key => $senderid) {
+                            $boards = $senderid['Senderid']['sender'];?>
 
-                    ?>
-                            <!-- <option value="" disabled selected>Select...</option> -->
-                            <option value="<?php echo $boards; ?>"><?php echo $boards; ?></option>
-                            <?php
-                    }
-
-                    ?>
+                            <option value="<?php  echo $boards;?>"><?php  echo $boards;?></option>
+                           
+		            	<?php }?>
                         </select>
                     </label>
                     </p>
                     <p class="ptomato">
                         <label>
                         SMS Alert Route:<br>
-                        <select style=" color: inherit;font: inherit;margin: 0;margin-top: 0.5em;width: 100% !important;">
+                        <select id="route_section" style=" color: inherit;font: inherit;margin: 0;margin-top: 0.5em;width: 100% !important;">
+                        
                         <?php
-                    foreach ($cred as $key => $creditroot) {
-                        $creditrout = $creditroot['route'];
-                    ?>
-                        <!-- <option value="" disabled selected>Select...</option> -->
-                            <option value=" <?php echo $creditrout; ?>"><?php echo $creditrout; ?></option>
-                            
-                            <?php
-                    }
-
-                    ?>
+                        foreach ($cred as $key => $creditroot) {
+				          $creditrout = $creditroot['route'];?>
+				
+			
+                            <option value="<?php echo $creditrout;?>"><?php echo $creditrout;?></option>
+                      <?php  }?>
+                          
                         </select>
                     </label>
                     </p>
@@ -150,17 +106,17 @@ function subscriber_page_smscampain()
                         Templates:<br>
                         
                             
-                    <select name="smsalert_templates" id="smsalert_templates" style="width:87%;color: inherit;font: inherit;margin: 0;margin-top: 0.5em;width: 100% !important;" onchange="return selecttemplate(this, '#wc_sms_alert_sms_order_message');">
-                            <option value=""><?php esc_html_e( 'Select Template', 'sms-alert' ); ?></option>
-						<?php
-						if ( array_key_exists( 'description', $templates ) && ( ! array_key_exists( 'desc', $templates['description'] ) ) ) {
-							foreach ( $templates['description'] as $template ) {
-								?>
-						<option value="<?php echo esc_textarea( $template['Smstemplate']['template'] ); ?>"><?php echo esc_attr( $template['Smstemplate']['title'] ); ?></option>
-								<?php
-							}
-						}
-						?>
+                    <select name="smsalert_templates" id="template_section" style="width:87%;color: inherit;font: inherit;margin: 0;margin-top: 0.5em;width: 100% !important;" onchange="return selecttemplate(this, '#wc_sms_alert_sms_order_message');">
+                    <option value="" disabled selected>Slect Template...</option>
+                    <?php foreach ( $templates['description'] as $template ){
+				?>
+                  
+                <option value="<?php echo esc_textarea( $template['Smstemplate']['template'] ); ?>"><?php echo esc_attr( $template['Smstemplate']['title'] ); ?></option>
+				
+
+			<?php	}?>
+
+                   					
 						</select>
                        
                     </label>
@@ -173,29 +129,65 @@ function subscriber_page_smscampain()
                     </label>
                     </p>
                     <p class="ptomato">
-                        <input type="hidden" name="dogl-names" value="<?php echo $selected; ?>"> 
-                        <input type="submit" name="submit" value="Send SMS" style=" display: inline-block;padding: 6px 10px;color: #ffff;font: inherit;background-color: #2271B1;border: 1px solid #F0F0F1;border-radius: 5px;cursor: pointer;transition: all 300ms ease;box-shadow: 0px 0px 0px 0px #2271b1eb;">
+                        
+                        <button type="button" id="send_sms"  onclick="sending_data()" style=" display: inline-block;padding: 6px 10px;color: #ffff;font: inherit;background-color: #2271B1;border: 1px solid #F0F0F1;border-radius: 5px;cursor: pointer;transition: all 300ms ease;box-shadow: 0px 0px 0px 0px #2271b1eb;">Send SMS</button>
                     </p>
+                    <div id="success_message" style="width:100%; height:100%; display:none; ">
+                    <h3>Your message send successfully!</h3>
                 </div>
-            </form>
-        <?php
-        }
-        
-            if (!empty($_REQUEST['submit']) && ($_REQUEST['submit']) == 'Send SMS') {
-
-
-
-                $datas = array();
-                $val = data_phone();
-                foreach ($val as $newval) {
-                    $datas[] = array('number' => $newval, 'sms_body' => $_POST['message']);
-                }            
-                $respo    = SmsAlertcURLOTP::send_sms_xml($datas,$boards);
-                $response_arr = json_decode($respo, true);
-            }?>
-            <!-- /SENDBOX -->
+                <div id="error_message" style="width:100%; height:100%; display:none; ">
+                    <h3>Error</h3> Sorry there was an error sending your message. </div>
+                </div>
+        </div>
+            <!-- /SEARCH DATA -->
+            <!-- SENDBOX -->
+           
+            <script>
+                function select_data(){
+                    var dogl_names = $('#dogl_names').val();
+                    $('#btn').html('please whait..');
+                    jQuery.ajax({
+                        url: "http:\/\/localhost\/wordpress\/wp-admin\/admin-ajax.php",
+                        type:'POST',
+                        data:'action=smscampain_data&dogl_names='+dogl_names+'&searchdata=',
+			             success : function(response) {
+                            $('.trecord').text(response);
+                            $('#btn').html('SearchData');
+                            $('#select_section').hide();
+                            $('#backtosearch').show();
+                            $('#sendbox_section').show();
+                           
+                        }
+                    });
+                }
+                function sending_data(){
+                    var senderid_section = $('#senderid_section').val();
+                    var route_section = $('#route_section').val();
+                    var template_section = $('#template_section').val();
+                    var wc_sms_alert_sms_order_message = $('#wc_sms_alert_sms_order_message').val();
+                    var dogl_names = $('#dogl_names').val();
+                     $('#send_sms').html('Sending...');
+                    jQuery.ajax({
+                        url: "http:\/\/localhost\/wordpress\/wp-admin\/admin-ajax.php",
+                        type:'POST',
+                        data:'action=smscampain_data&senderid_section='+senderid_section+'&route_section='+route_section+ '&template_section='+template_section+'&wc_sms_alert_sms_order_message='+wc_sms_alert_sms_order_message+'&dogl_names='+dogl_names ,
+			             success : function(response){
+                            $('#send_sms').html('Send SMS');
+                             if(response==1)
+                             {
+                                $('#success_message').show();
+                                $('#reset').reset();
+                             }else{
+                                $('#error_message').show(); 
+                             }
+                            
+                       
+                        }
+                    });
+                }
+            </script>
          
-
+    </div>
     <?php
 }
 

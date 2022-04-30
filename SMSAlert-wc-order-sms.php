@@ -187,6 +187,9 @@ class smsalert_WC_Order_SMS {
 		
 		add_action( 'init', array( $this, 'register_hook_send_sms' ) );
 
+		add_action( 'wp_ajax_smscampain_data', array( $this, 'smscampain_empty' ) );
+		add_action( 'wp_ajax_nopriv_smscampain_data', array( $this, 'smscampain_empty' ) );
+
 		add_action( 'woocommerce_checkout_update_order_meta', array( $this, 'buyer_notification_update_order_meta' ) );
 		add_action( 'woocommerce_order_status_changed', array( 'WooCommerceCheckOutForm', 'trigger_after_order_place' ), 10, 3 );
 		add_action( 'woocommerce_new_order', array( $this, 'sa_wc_order_place' ), 10, 1 );
@@ -222,6 +225,52 @@ class smsalert_WC_Order_SMS {
 		add_action( 'sa_addTabs', array( $this, 'addTabs' ), 10 );
 		add_filter( 'sAlertDefaultSettings', array( $this, 'addDefaultSetting' ), 1 );
 		//add_action( 'activated_plugin', array($this, 'cyb_activation_redirect') ); //testing part
+	}
+function com_select($selected){
+	$args = array(
+		'status' => array($selected),
+	);
+	$orders = wc_get_orders($args);
+
+$temp_array = array();
+foreach ($orders as $key => $order) {
+	$phone = $order->get_billing_phone();
+	$temp_array[] = $phone;
+}
+$shortdata = (array_unique($temp_array));
+ return $shortdata;
+}
+	function smscampain_empty() {
+		   if (isset($_POST['dogl_names']) && isset($_POST['searchdata'])) {
+				$selected = $_POST['dogl_names'];
+		
+		
+				$shortdata = self::com_select($selected);
+
+			echo count($shortdata);
+			die();
+			} 
+		if (isset($_POST['senderid_section']) && isset($_POST['route_section']) && isset($_POST['template_section']) && isset($_POST['wc_sms_alert_sms_order_message']) && isset($_POST['dogl_names'])){
+
+			$datas = array();
+			$shortdata = self::com_select($_POST['dogl_names']);
+			
+			foreach ($shortdata as $newval) {
+				$datas[] = array('number' => $newval, 'sms_body' => $_POST['wc_sms_alert_sms_order_message']);
+			}            
+			$respo    = SmsAlertcURLOTP::send_sms_xml($datas,$_POST['senderid_section']);
+			$response_arr = json_decode($respo, true);
+			if ( 'success' === $response_arr['status'] ) {
+				echo '1';
+			}
+			else{
+				echo '0';
+			}
+
+		  die();
+		}
+		
+			
 	}
 	
 	//testing part
@@ -324,7 +373,7 @@ class smsalert_WC_Order_SMS {
 			SmsAlertcURLOTP::sendsms( $obj );
 		}
 	}
-	
+
 	/**
 	 * This function adds tabs.
 	 *
@@ -940,6 +989,12 @@ class smsalert_WC_Order_SMS {
 		WooCommerceCheckOutForm::trigger_after_order_place( $order_id, 'pending', 'pending' );
 	}
 } // SMSAlert_WC_Order_SMS
+ 
+	
+	//////////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 /**
  * Loaded after all plugin initialize

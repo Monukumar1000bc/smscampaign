@@ -22,7 +22,7 @@ function subscriber_page_smscampain()
         //templates 
 				
 ?>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <style>
         .wp-core-ui select {
             width: 100px !important;
@@ -67,7 +67,7 @@ function subscriber_page_smscampain()
                 </div>
                 <div style="display:flex">
                 <h3 style ="color:#504d4d;">Total record : <span class="trecord">0</span></h3> 
-                <a href="javascript:void(0)" style="margin-top:20px; margin-left:10px; display:none;" id="backtosearch"> modify search </a>
+                <a href="#" style="margin-top:20px; margin-left:10px; display:none;" onclick="modyfi_data()" id="backtosearch"> modify search </a>
                 </div>
           <div  id="sendbox_section" style="margin-bottom: 1em;  display: flex;flex-direction: column;flex-wrap: wrap; display: none;">
                     <p class="ptomato">
@@ -133,12 +133,15 @@ function subscriber_page_smscampain()
                         <button type="button" id="send_sms"  onclick="sending_data()" style=" display: inline-block;padding: 6px 10px;color: #ffff;font: inherit;background-color: #2271B1;border: 1px solid #F0F0F1;border-radius: 5px;cursor: pointer;transition: all 300ms ease;box-shadow: 0px 0px 0px 0px #2271b1eb;">Send SMS</button>
                     </p>
                     <div id="success_message" style="width:100%; height:100%; display:none; ">
-                    <h3>Your message send successfully!</h3>
+               
                 </div>
                 <div id="error_message" style="width:100%; height:100%; display:none; ">
-                    <h3>Error</h3> Sorry there was an error sending your message. </div>
+                    
+                 </div>
+                   
                 </div>
         </div>
+         
             <!-- /SEARCH DATA -->
             <!-- SENDBOX -->
            
@@ -173,21 +176,48 @@ function subscriber_page_smscampain()
                         data:'action=smscampain_data&senderid_section='+senderid_section+'&route_section='+route_section+ '&template_section='+template_section+'&wc_sms_alert_sms_order_message='+wc_sms_alert_sms_order_message+'&dogl_names='+dogl_names ,
 			             success : function(response){
                             $('#send_sms').html('Send SMS');
+                            
                              if(response==1)
                              {
-                                $('#success_message').show();
-                                $('#reset').reset();
+                                $('#success_message').html(' <h3>Your message send successfully!</h3>').show();
+                             
+                                setTimeout(hideSection, 8000);
+                                $('#backtosearch').hide(); 
+                                $("#reset").trigger("reset");
+                                $('.trecord').text(0);
                              }else{
-                                $('#error_message').show(); 
+                                $('#error_message').html(' <h3>Your message sending error!</h3>').show(); 
+                                
+                                setTimeout(hideSection, 8000);
+                                $('#backtosearch').hide();
+                                $("#reset").trigger("reset");
+                                $('.trecord').text(0);
                              }
                             
                        
-                        }
+                        },
+                        
                     });
                 }
+                function hideSection()
+                {
+                    $('#sendbox_section').hide(); 
+                    $('#select_section').show();
+                    $('#error_message').html('');
+                    $('#success_message').html('');
+                }
+            function modyfi_data(){
+             $('#select_section').show();
+             $('#sendbox_section').hide();
+             $('#backtosearch').hide();
+             $("#reset").trigger("reset");
+             $('.trecord').text(0);
+            }
+           
             </script>
          
     </div>
+
     <?php
 }
 

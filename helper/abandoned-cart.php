@@ -1565,26 +1565,26 @@ class SA_Admin_Table extends WP_List_Table {
 		global $wpdb;
 		$table_name = $wpdb->prefix . SA_CART_TABLE_NAME; // do not forget about tables prefix
 
-		// if ( 'delete' === $this->current_action() ) {
-		// 	$ids = isset( $_REQUEST['id'] ) ? smsalert_sanitize_array( $_REQUEST['id'] ) : array();
-		// 	if ( ! empty( $ids ) ) {
-		// 		if ( is_array( $ids ) ) { // Bulk abandoned cart deletion
-		// 			foreach ( $ids as $key => $id ) {
-		// 				$wpdb->query(
-		// 					$wpdb->prepare(
-		// 						"DELETE FROM $table_name
-        //                         WHERE id = %d",
-		// 						intval( $id )
+		if ( 'delete' === $this->current_action() ) {
+			$ids = isset( $_REQUEST['id'] ) ? smsalert_sanitize_array( $_REQUEST['id'] ) : array();
+			if ( ! empty( $ids ) ) {
+				if ( is_array( $ids ) ) { // Bulk abandoned cart deletion
+					foreach ( $ids as $key => $id ) {
+						$wpdb->query(
+							$wpdb->prepare(
+								"DELETE FROM $table_name
+                                WHERE id = %d",
+								intval( $id )
 							)
 						);
 					}
 				} else { // Single abandoned cart deletion
-					// $id = $ids;
-					// $wpdb->query(
-					// 	$wpdb->prepare(
-					// 		"DELETE FROM $table_name
-                    //         WHERE id = %d",
-					// 		intval( $id )
+					$id = $ids;
+					$wpdb->query(
+						$wpdb->prepare(
+							"DELETE FROM $table_name
+                            WHERE id = %d",
+							intval( $id )
 						)
 					);
 				}
@@ -1610,8 +1610,8 @@ class SA_Admin_Table extends WP_List_Table {
 				}
 			}
 		}
+	
 	}
-
 	/**
 	 * Prepare items function.
 	 *

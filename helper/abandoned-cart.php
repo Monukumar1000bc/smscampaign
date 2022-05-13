@@ -461,8 +461,13 @@ class SA_Cart_Admin {
 				<?php esc_html_e( 'Looks like you do not have any saved Abandoned carts yet.<br/>But do not worry, as soon as someone fills the <strong>Phone number</strong> fields of your WooCommerce Checkout form and abandons the cart, it will automatically appear here.', 'sms-alert' ); ?>
 				</p>
 			<?php } else { ?>
+			
+					
+				
 				<form method="GET">
-					<input type="hidden" name="page" value="<?php echo esc_attr( $_REQUEST['page'] ); ?>"/>
+				<button class="sms_data">smscampaign</button>
+
+				<input type="hidden" name="page" value="<?php echo esc_attr( $_REQUEST['page'] ); ?>"/>
 				<?php $wp_list_table->display(); ?>
 				</form>
 				<?php
@@ -472,6 +477,7 @@ class SA_Cart_Admin {
 		</div>
 		<?php
 	}
+	
 	/**
 	 * Setup the start & end time stamps to be used by all the functions to retrieve the data.
 	 */
@@ -1545,6 +1551,7 @@ class SA_Admin_Table extends WP_List_Table {
 	function get_bulk_actions() {
 		$actions = array(
 			'delete' => __( 'Delete', 'sms-alert' ),
+			'sendsms' => __( 'SendSMS', 'sms-alert' ),
 		);
 		return $actions;
 	}
@@ -1558,28 +1565,48 @@ class SA_Admin_Table extends WP_List_Table {
 		global $wpdb;
 		$table_name = $wpdb->prefix . SA_CART_TABLE_NAME; // do not forget about tables prefix
 
-		if ( 'delete' === $this->current_action() ) {
-			$ids = isset( $_REQUEST['id'] ) ? smsalert_sanitize_array( $_REQUEST['id'] ) : array();
-			if ( ! empty( $ids ) ) {
-				if ( is_array( $ids ) ) { // Bulk abandoned cart deletion
-					foreach ( $ids as $key => $id ) {
-						$wpdb->query(
-							$wpdb->prepare(
-								"DELETE FROM $table_name
-                                WHERE id = %d",
-								intval( $id )
+		// if ( 'delete' === $this->current_action() ) {
+		// 	$ids = isset( $_REQUEST['id'] ) ? smsalert_sanitize_array( $_REQUEST['id'] ) : array();
+		// 	if ( ! empty( $ids ) ) {
+		// 		if ( is_array( $ids ) ) { // Bulk abandoned cart deletion
+		// 			foreach ( $ids as $key => $id ) {
+		// 				$wpdb->query(
+		// 					$wpdb->prepare(
+		// 						"DELETE FROM $table_name
+        //                         WHERE id = %d",
+		// 						intval( $id )
 							)
 						);
 					}
 				} else { // Single abandoned cart deletion
-					$id = $ids;
-					$wpdb->query(
-						$wpdb->prepare(
-							"DELETE FROM $table_name
-                            WHERE id = %d",
-							intval( $id )
+					// $id = $ids;
+					// $wpdb->query(
+					// 	$wpdb->prepare(
+					// 		"DELETE FROM $table_name
+                    //         WHERE id = %d",
+					// 		intval( $id )
 						)
 					);
+				}
+			}
+		}
+
+
+		if ( 'sendsms' === $this->current_action() ) {
+			$ids = isset( $_REQUEST['id'] ) ? smsalert_sanitize_array( $_REQUEST['id'] ) : array();
+			if ( ! empty( $ids ) ) {
+				if ( is_array( $ids ) ) {
+					foreach ( $ids as $key => $id ) {
+						
+						$results=$wpdb->get_results("SELECT * FROM $table_name WHERE id = $id ", ARRAY_A );
+						
+						$arr=$results[0]['phone'];
+						$arr_phone[] =$arr;
+						$string = rtrim(implode(',', $arr_phone), ',');
+						// echo $string;
+						wp_redirect( '"admin.php?page=all-smscampain&phone="'.$string );
+					}
+					
 				}
 			}
 		}

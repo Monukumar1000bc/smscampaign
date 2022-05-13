@@ -66,6 +66,7 @@
 			</table>
 			<?php $count++; } ?>
 			<div style="padding: 10px 0px 0px 10px;">
+			
 				<button class="button action" id="addNew" type="button" data-parent_id="<?php echo esc_attr( $template['checkboxNameId'] ); ?>">
 				<span class="dashicons dashicons-plus-alt2"></span> <?php esc_html_e( 'Add New', 'sms-alert' ); ?></button>
 			</div>
@@ -85,6 +86,7 @@
 					</td>
 				</tr>
 				</table>
+				
 				</div>
 	    <?php
 		$exit_intent_on   = smsalert_get_option( 'cart_exit_intent_status', 'smsalert_abandoned_cart', '0' );

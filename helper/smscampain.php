@@ -23,6 +23,8 @@ function subscriber_page_smscampain()
 				
 ?>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js" integrity="sha512-rMGGF4wg1R73ehtnxXBt5mbUfN9JUJwbk21KMlnLZDJh7BkPmeovBuddZCENJddHYYMkCh9hPFnPmS9sspki8g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
     <style>
         .wp-core-ui select {
             width: 100px !important;
@@ -39,23 +41,26 @@ function subscriber_page_smscampain()
             background-color: blue;
         }
     </style>
-
+    
     <div class="container wp-core-ui" style=" min-width: 960px; height: 100%;margin: 0 auto;padding: 1.5em;background-color: #F0F0F1;font-size: 1rem;font-family: 'Lato'; ">
         <h1 style="font-size: 2em;color: #504d4d;font-weight: 400;text-align: left;margin-bottom: 0.5em;margin-top: 0;border-radius: 4px;padding: 10px;background: #F0F0F1;width: 100%;">SMS CAMPAIGN</h1>
         <!-- SEARCH DATA -->
         <div style=" display: flex;flex-direction: column;flex-wrap: wrap;">
             <div id="select_section" style="display: block;">
-            <form action="" method="POST" id="reset">
-
+            <form action="" method="POST" id="reset"> 
+           
             <p class="ptomato">
         <label>Select Event<br>
-            <select name="dogl-names" id="dogl_names" style=" color: inherit;font: inherit;margin: 0;margin-top: 0.5em;width: 100% !important;">
-                <option value="" disabled selected>Slect Data...</option>
-                <option value="shop_order">All Customer </option>
-                <option value="wc-processing">processing data</option>
+       
+            <select  name="dogl_names[]" size="10" data-placeholder="Choose event..."  id="dogl_names" style=" color: inherit;font: inherit;margin: 0;margin-top: 0.5em;width: 100% !important;" multiple class="chosen-select">
+               
+            <option value="wc-processing">processing data</option>
+                <option value="wc-pending">Pending </option>
                 <option value="wc-on-hold">on-hold data</option>
                 <option value="wc-cancelled">Cancelled data</option>
-                <option value="wc-complete">Completed data</option>
+                <option value="wc-completed">Completed data</option>
+                <option value="wc-refunded">Refunded </option>
+                <option value="wc-failed">Failed </option>
              </select>
          </label>
                 </p>
@@ -67,6 +72,7 @@ function subscriber_page_smscampain()
                 </div>
                 <div style="display:flex">
                 <h3 style ="color:#504d4d;">Total record : <span class="trecord">0</span></h3> 
+
                 <a href="#" style="margin-top:20px; margin-left:10px; display:none;" onclick="modyfi_data()" id="backtosearch"> modify search </a>
                 </div>
           <div  id="sendbox_section" style="margin-bottom: 1em;  display: flex;flex-direction: column;flex-wrap: wrap; display: none;">
@@ -85,6 +91,14 @@ function subscriber_page_smscampain()
                         </select>
                     </label>
                     </p>
+                     
+                    <?php
+                        foreach ($cred as $key => $creditroot) {
+				          $creditrout = $creditroot['route'];
+                        }
+                          ?>
+                    <?php 
+                    if ($cred){?>
                     <p class="ptomato">
                         <label>
                         SMS Alert Route:<br>
@@ -94,20 +108,21 @@ function subscriber_page_smscampain()
                         foreach ($cred as $key => $creditroot) {
 				          $creditrout = $creditroot['route'];?>
 				
-			
                             <option value="<?php echo $creditrout;?>"><?php echo $creditrout;?></option>
                       <?php  }?>
                           
                         </select>
                     </label>
                     </p>
+                        <?php
+                    }?>
                     <p class="ptomato">
                         <label>
                         Templates:<br>
                         
                             
                     <select name="smsalert_templates" id="template_section" style="width:87%;color: inherit;font: inherit;margin: 0;margin-top: 0.5em;width: 100% !important;" onchange="return selecttemplate(this, '#wc_sms_alert_sms_order_message');">
-                    <option value="" disabled selected>Slect Template...</option>
+                    <option value="" disabled selected>Select Template...</option>
                     <?php foreach ( $templates['description'] as $template ){
 				?>
                   
@@ -141,18 +156,35 @@ function subscriber_page_smscampain()
                    
                 </div>
         </div>
-         
+                    </form>
+
+                    <?php
+                    $phone = '';
+                    $count = '';
+                    if (isset($_GET['phone'])){
+                    $phone =trim(( $_GET['phone']));
+                   
+                    $arr_phone = explode(",","$phone");
+                    
+                    $count = count($arr_phone);
+                    }
+                    ?>
             <!-- /SEARCH DATA -->
             <!-- SENDBOX -->
            
             <script>
+               
+               
+                $(".chosen-select").chosen();
+
                 function select_data(){
                     var dogl_names = $('#dogl_names').val();
-                    $('#btn').html('please whait..');
+                    $('#btn').html('Please Wait..');
                     jQuery.ajax({
                         url: "http:\/\/localhost\/wordpress\/wp-admin\/admin-ajax.php",
                         type:'POST',
                         data:'action=smscampain_data&dogl_names='+dogl_names+'&searchdata=',
+                          
 			             success : function(response) {
                             $('.trecord').text(response);
                             $('#btn').html('SearchData');
@@ -170,13 +202,14 @@ function subscriber_page_smscampain()
                     var wc_sms_alert_sms_order_message = $('#wc_sms_alert_sms_order_message').val();
                     var dogl_names = $('#dogl_names').val();
                      $('#send_sms').html('Sending...');
+                    
                     jQuery.ajax({
                         url: "http:\/\/localhost\/wordpress\/wp-admin\/admin-ajax.php",
                         type:'POST',
-                        data:'action=smscampain_data&senderid_section='+senderid_section+'&route_section='+route_section+ '&template_section='+template_section+'&wc_sms_alert_sms_order_message='+wc_sms_alert_sms_order_message+'&dogl_names='+dogl_names ,
+                        data:'action=smscampain_data&senderid_section='+senderid_section+'&route_section='+route_section+ '&template_section='+template_section+'&wc_sms_alert_sms_order_message='+wc_sms_alert_sms_order_message+'&dogl_names='+dogl_names+'&arr_phone='+arr_phone ,
 			             success : function(response){
                             $('#send_sms').html('Send SMS');
-                            
+                            debugger;
                              if(response==1)
                              {
                                 $('#success_message').html(' <h3>Your message send successfully!</h3>').show();
@@ -210,15 +243,31 @@ function subscriber_page_smscampain()
              $('#select_section').show();
              $('#sendbox_section').hide();
              $('#backtosearch').hide();
-             $("#reset").trigger("reset");
+            //  $("#reset").trigger("reset");
              $('.trecord').text(0);
             }
-           
-            </script>
-         
-    </div>
 
-    <?php
+            
+        // $(".chosen-select").each(function(){
+        //      var thisOptionValue=$(this).val();
+        // 
+    
+        var data_arr = '(<?php echo $count; ?>)';
+               var arr_phone = '<?php echo $phone; ?>';
+               if (arr_phone!=''){        
+                $('.trecord').text(data_arr);                
+                $('#select_section').hide();
+                $('#backtosearch').show();
+                $('#sendbox_section').show();
+                }      
+        
+
+  
+         </script>
+         
+    </div><?php
+    
+    
 }
 
 

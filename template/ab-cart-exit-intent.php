@@ -122,4 +122,5 @@ if ($image_id ) {
 	<?php
 	}
 	?>
+    
 </div>

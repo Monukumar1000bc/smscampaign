@@ -225,40 +225,58 @@ class smsalert_WC_Order_SMS {
 		add_action( 'sa_addTabs', array( $this, 'addTabs' ), 10 );
 		add_filter( 'sAlertDefaultSettings', array( $this, 'addDefaultSetting' ), 1 );
 		//add_action( 'activated_plugin', array($this, 'cyb_activation_redirect') ); //testing part
+		
 	}
+		
 function com_select($selected){
+	if (!empty($_POST['dogl_names'])){
 	$args = array(
-		'status' => array($selected),
+		'status' => $selected,
+		'limit'  => -1,
 	);
-	$orders = wc_get_orders($args);
-
+}
+	$orders = wc_get_orders( $args );
+	
 $temp_array = array();
 foreach ($orders as $key => $order) {
 	$phone = $order->get_billing_phone();
 	$temp_array[] = $phone;
 }
-$shortdata = (array_unique($temp_array));
+// $shortdata = (array_unique($temp_array));
+$shortdata = array_unique($temp_array);
  return $shortdata;
 }
 	function smscampain_empty() {
+		
 		   if (isset($_POST['dogl_names']) && isset($_POST['searchdata'])) {
-				$selected = $_POST['dogl_names'];
-		
-		
+			$selected= $_POST['dogl_names'];
+			
+
 				$shortdata = self::com_select($selected);
 
 			echo count($shortdata);
 			die();
 			} 
-		if (isset($_POST['senderid_section']) && isset($_POST['route_section']) && isset($_POST['template_section']) && isset($_POST['wc_sms_alert_sms_order_message']) && isset($_POST['dogl_names'])){
 
+		if (isset($_POST['senderid_section']) && isset($_POST['route_section']) && isset($_POST['template_section']) && isset($_POST['wc_sms_alert_sms_order_message']) && isset($_POST['dogl_names']) || isset($_POST['arr_phone'])){
+		;
 			$datas = array();
+			$phone =trim(($_POST['arr_phone']));
+          
+			if (empty ($phone)){
 			$shortdata = self::com_select($_POST['dogl_names']);
-			
+			}else{
+				$shortdata = explode(",","$phone");
+
+			}
 			foreach ($shortdata as $newval) {
 				$datas[] = array('number' => $newval, 'sms_body' => $_POST['wc_sms_alert_sms_order_message']);
-			}            
-			$respo    = SmsAlertcURLOTP::send_sms_xml($datas,$_POST['senderid_section']);
+			}   
+	
+		
+			// echo $_POST['senderid_section'];
+			// exit();         
+			$respo    = SmsAlertcURLOTP::send_sms_campaign_xml($datas,$_POST['senderid_section'],$_POST['route_section']);
 			$response_arr = json_decode($respo, true);
 			if ( 'success' === $response_arr['status'] ) {
 				echo '1';

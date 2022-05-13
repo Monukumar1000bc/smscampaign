@@ -131,10 +131,10 @@ class SmsAlertUtility {
 			session_start();
 		}
 
-		/*
+		
 		if (session_id() === '' || !isset($_SESSION)){
 		session_start();
-		} */
+		} 
 	}
 
 	/**

@@ -469,6 +469,79 @@ XML;
 
 		return $response;
 	}
+	/**
+	 * Send sms xml.
+	 *
+	 * @param array $sms_datas sms_datas.
+	 *
+	 * @return array
+	 */
+	public static function send_sms_campaign_xml( $sms_datas, $senderid=null, $route=null ) {
+		if ( is_array( $sms_datas ) && sizeof( $sms_datas ) == 0 ) {
+			return false;
+		}
+
+		$username = smsalert_get_option( 'smsalert_name', 'smsalert_gateway' );
+		$password = smsalert_get_option( 'smsalert_password', 'smsalert_gateway' );
+		$senderid = ($senderid!=null)?$senderid:smsalert_get_option( 'smsalert_api', 'smsalert_gateway' );
+        $route =  ($route!=null)?$route:''; 
+		$xmlstr = <<<XML
+<?xml version='1.0' encoding='UTF-8'?>
+<message>
+</message>
+XML;
+		$msg    = new SimpleXMLElement( $xmlstr );
+		$user   = $msg->addChild( 'user' );
+		$user->addAttribute( 'username', $username );
+		$user->addAttribute( 'password', $password );
+		$user->addAttribute( 'route', $route );
+		
+		$enable_short_url = smsalert_get_option( 'enable_short_url', 'smsalert_general' );
+		if ( $enable_short_url === 'on' ) {
+			$user->addAttribute( 'shortenurl', 1 );}
+
+		$cnt = 0;
+		foreach ( $sms_datas as $sms_data ) {
+			$phone = self::checkPhoneNos( $sms_data['number'] );
+			if ( $phone !== false ) {
+				$sms = $msg->addChild( 'sms' );
+
+				$datas = apply_filters( 'sa_before_send_sms', array( 'text' => $sms_data['sms_body'] ) );
+
+				if ( ! empty( $datas['text'] ) ) {
+					$sms_data['sms_body'] = $datas['text'];
+				}
+
+				$sms->addAttribute( 'text', $sms_data['sms_body'] );
+
+				$address = $sms->addChild( 'address' );
+				$address->addAttribute( 'from', $senderid );
+				$address->addAttribute( 'to', $phone );
+				$cnt++;
+			}
+		}
+
+		if ( $msg->count() <= 1 ) {
+			return false;
+		}
+
+		$xmldata = $msg->asXML();
+		$url     = 'http://www.smsalert.co.in/api/xmlpush.json?';
+		$fields  = array( 'data' => $xmldata );
+		if ( $cnt > 0 ) {
+			$response = self::callAPI( $url, $fields, null );
+		} else {
+			$response = json_encode(
+				array(
+					'status'      => 'error',
+					'description' => 'Invalid WC Users Contact Numbers',
+				)
+			);
+		}
+
+		return $response;
+	}
+
 
 	/**
 	 * Send sms xml.
@@ -477,14 +550,14 @@ XML;
 	 *
 	 * @return array
 	 */
-	public static function send_sms_xml( $sms_datas,$senderid=null ) {
+	public static function send_sms_xml( $sms_datas ) {
 		if ( is_array( $sms_datas ) && sizeof( $sms_datas ) == 0 ) {
 			return false;
 		}
 
 		$username = smsalert_get_option( 'smsalert_name', 'smsalert_gateway' );
 		$password = smsalert_get_option( 'smsalert_password', 'smsalert_gateway' );
-		$senderid = ($senderid!=null)?$senderid:smsalert_get_option( 'smsalert_api', 'smsalert_gateway' );
+		$senderid = smsalert_get_option( 'smsalert_api', 'smsalert_gateway' );
 
 		$xmlstr = <<<XML
 <?xml version='1.0' encoding='UTF-8'?>

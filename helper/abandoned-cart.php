@@ -125,8 +125,64 @@ class SA_Abandoned_Cart {
 		$this->loader->add_action( 'wp_ajax_nopriv_remove_exit_intent', $plugin_public, 'remove_exit_intent_form' ); // Checking if we have an empty cart in case of Ajax action
 		$this->loader->add_action( 'wp_ajax_remove_exit_intent', $plugin_public, 'remove_exit_intent_form' ); // Checking if we have an empty cart in case of Ajax action if the user is logged in
 		$this->loader->add_action( 'woocommerce_before_checkout_form', $plugin_public, 'update_logged_customer_id', 10 ); // Fires when the Checkout form is loaded to update the abandoned cart session from unknown customer_id to known one in case if the user has logged in
+		add_filter("bulk_actions-users", array( $this, 'add_action' ), 1 );
+		add_filter( 'handle_bulk_actions-users',array( $this, 'sendsms_users' ),10, 3 );
+		add_filter( 'bulk_actions-edit-shop_order', array( $this, 'add_action_order' ), 1 );
+		add_filter( 'handle_bulk_actions-edit-shop_order',array( $this, 'sendsms_orders' ),10, 3 );
+	}
+	function add_action_order($actions) {
+
+		$actions['sendsms_orderdata'] = 'SendSMS';
+
+		return $actions;
+	}
+	function sendsms_orders($redirect_to, $doaction, $post_ids) {
+		
+		if ( 'sendsms_orderdata' === $doaction ) {
+			
+			if ( ! empty( $post_ids ) ) {
+				if ( is_array( $post_ids ) ) {
+					foreach ( $post_ids as $key => $id ) {	
+						$user_phone = get_post_meta( $id, '_billing_phone', true ); 
+						$arr_phone[] =$user_phone;
+						
+					}
+					$string = rtrim(implode(',', $arr_phone), ',');
+						
+					wp_redirect( '"admin.php?page=all-smscampain&phone="'.$string );
+				}
+			}
+		}
+
+		
 	}
 
+	function add_action($actions) {
+
+		$actions['sendsms_userdata'] = 'SendSMS';
+
+		return $actions;
+	}
+	function sendsms_users($redirect_to, $doaction, $post_ids) {
+
+		if ( 'sendsms_userdata' === $doaction ) {
+			
+			if ( ! empty( $post_ids ) ) {
+				if ( is_array( $post_ids ) ) {
+					foreach ( $post_ids as $key => $id ) {
+						$user_phone = get_user_meta( $id, 'billing_phone', true ); 
+						$arr_phone[] =$user_phone;
+						
+					}
+					$string = rtrim(implode(',', $arr_phone), ',');
+						
+					wp_redirect( '"admin.php?page=all-smscampain&phone="'.$string );
+				}
+			}
+		}
+
+		
+	}
 	/**
 	 * Run function.
 	 *
@@ -465,8 +521,6 @@ class SA_Cart_Admin {
 					
 				
 				<form method="GET">
-				<button class="sms_data">smscampaign</button>
-
 				<input type="hidden" name="page" value="<?php echo esc_attr( $_REQUEST['page'] ); ?>"/>
 				<?php $wp_list_table->display(); ?>
 				</form>
@@ -1610,6 +1664,8 @@ class SA_Admin_Table extends WP_List_Table {
 				}
 			}
 		}
+
+		
 	
 	}
 	/**

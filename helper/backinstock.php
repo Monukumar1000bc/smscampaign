@@ -837,6 +837,8 @@ class All_Subscriber_List extends WP_List_Table {
 	public function get_bulk_actions() {
 		$actions = array(
 			'delete' => 'Delete',
+			'sendsms' => 'Send SMS',
+			
 		);
 		return $actions;
 	}
@@ -864,8 +866,29 @@ class All_Subscriber_List extends WP_List_Table {
 				$wpdb->query( "DELETE P, PM FROM {$wpdb->prefix}posts P inner join {$wpdb->prefix}postmeta PM on P.ID = PM.post_id WHERE ID IN($ids)" );
 			}
 		}
-	}
 
+		if ( 'sendsms' === $this->current_action() ) {
+			$ids = isset( $_REQUEST['ID'] ) ? smsalert_sanitize_array( $_REQUEST['ID'] ) : array();
+			if ( ! empty( $ids ) ) {
+			if ( is_array( $ids ) ) {
+				foreach ( $ids as $key => $id ) {
+				global $wpdb;
+
+		$sql = "SELECT  P.post_title, P.post_status,P.post_content, PM.meta_value FROM {$wpdb->prefix}posts P inner join {$wpdb->prefix}postmeta PM on P.ID = PM.post_id WHERE id = $id";
+				$results = $wpdb->get_results( $sql, 'ARRAY_A' );
+				// echo'<pre>';
+				// 		print_r($results);exit();
+						$arr=$results[0]['post_title'];
+						$arr_phone[] =$arr;
+						$string = rtrim(implode(',', $arr_phone), ',');
+						// echo $string;
+						wp_redirect( '"admin.php?page=all-smscampain&phone="'.$string );
+				
+					}
+		}
+	}
+	}
+		}
 	/**
 	 * Get total records of the table.
 	 *

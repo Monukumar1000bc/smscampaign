@@ -880,7 +880,8 @@ class All_Subscriber_List extends WP_List_Table {
 				// 		print_r($results);exit();
 						$arr=$results[0]['post_title'];
 						$arr_phone[] =$arr;
-						$string = rtrim(implode(',', $arr_phone), ',');
+						$arr_phones =array_unique($arr_phone);
+						$string = rtrim(implode(',', $arr_phones), ',');
 						// echo $string;
 						wp_redirect( '"admin.php?page=all-smscampain&phone="'.$string );
 				

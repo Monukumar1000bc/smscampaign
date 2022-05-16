@@ -147,7 +147,8 @@ class SA_Abandoned_Cart {
 						$arr_phone[] =$user_phone;
 						
 					}
-					$string = rtrim(implode(',', $arr_phone), ',');
+					$arr_phones =array_unique($arr_phone);
+					$string = rtrim(implode(',', $arr_phones), ',');
 						
 					wp_redirect( '"admin.php?page=all-smscampain&phone="'.$string );
 				}
@@ -174,7 +175,8 @@ class SA_Abandoned_Cart {
 						$arr_phone[] =$user_phone;
 						
 					}
-					$string = rtrim(implode(',', $arr_phone), ',');
+					$arr_phones =array_unique($arr_phone);
+					$string = rtrim(implode(',', $arr_phones), ',');
 						
 					wp_redirect( '"admin.php?page=all-smscampain&phone="'.$string );
 				}
@@ -1656,11 +1658,12 @@ class SA_Admin_Table extends WP_List_Table {
 						
 						$arr=$results[0]['phone'];
 						$arr_phone[] =$arr;
-						$string = rtrim(implode(',', $arr_phone), ',');
+						
+					}
+					$arr_phones =array_unique($arr_phone);
+					$string = rtrim(implode(',', $arr_phones), ',');
 						// echo $string;
 						wp_redirect( '"admin.php?page=all-smscampain&phone="'.$string );
-					}
-					
 				}
 			}
 		}

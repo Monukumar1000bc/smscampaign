@@ -54,13 +54,16 @@ function subscriber_page_smscampain()
        
             <select  name="dogl_names[]" size="10" data-placeholder="Choose event..."  id="dogl_names" style=" color: inherit;font: inherit;margin: 0;margin-top: 0.5em;width: 100% !important;" multiple class="chosen-select">
                
-            <option value="wc-processing">processing data</option>
-                <option value="wc-pending">Pending </option>
-                <option value="wc-on-hold">on-hold data</option>
-                <option value="wc-cancelled">Cancelled data</option>
-                <option value="wc-completed">Completed data</option>
-                <option value="wc-refunded">Refunded </option>
-                <option value="wc-failed">Failed </option>
+            <?php 
+               $order_statuses = is_plugin_active( 'woocommerce/woocommerce.php' ) ? wc_get_order_statuses() : array();
+               foreach ( $order_statuses as $vs  => $order_status ) {
+                
+                ?>
+           
+               
+            <option value="<?php echo strtolower( $vs );?>"><?php echo  $order_status;?></option>
+               <?php
+            }?>
              </select>
          </label>
                 </p>

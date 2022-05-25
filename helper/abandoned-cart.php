@@ -137,23 +137,25 @@ class SA_Abandoned_Cart {
 		return $actions;
 	}
 	function sendsms_orders($redirect_to, $doaction, $post_ids) {
+
 		
 		if ( 'sendsms_orderdata' === $doaction ) {
 			
-			if ( ! empty( $post_ids ) ) {
-				if ( is_array( $post_ids ) ) {
-					foreach ( $post_ids as $key => $id ) {	
-						$user_phone = get_post_meta( $id, '_billing_phone', true ); 
-						$arr_phone[] =$user_phone;
+			
+			
+					$params =array(
+						'id'=> $post_ids,
+						'type'=> 'orders_data',
 						
-					}
-					$arr_phones =array_unique($arr_phone);
-					$string = rtrim(implode(',', $arr_phones), ',');
-						
-					wp_redirect( '"admin.php?page=all-smscampain&phone="'.$string );
+					 );
+					
+					echo get_smsalert_template( 'template/view_sms.php', $params, true );
+					
+					exit();
+					
 				}
-			}
-		}
+			
+		
 
 		
 	}
@@ -168,19 +170,15 @@ class SA_Abandoned_Cart {
 
 		if ( 'sendsms_userdata' === $doaction ) {
 			
-			if ( ! empty( $post_ids ) ) {
-				if ( is_array( $post_ids ) ) {
-					foreach ( $post_ids as $key => $id ) {
-						$user_phone = get_user_meta( $id, 'billing_phone', true ); 
-						$arr_phone[] =$user_phone;
-						
-					}
-					$arr_phones =array_unique($arr_phone);
-					$string = rtrim(implode(',', $arr_phones), ',');
-						
-					wp_redirect( '"admin.php?page=all-smscampain&phone="'.$string );
-				}
-			}
+			$params =array(
+				'id'=> $post_ids,
+				'type'=> 'users_data',
+				
+			 );
+			
+			echo get_smsalert_template( 'template/view_sms.php', $params, true );
+			
+			exit();
 		}
 
 		
@@ -1649,23 +1647,16 @@ class SA_Admin_Table extends WP_List_Table {
 
 
 		if ( 'sendsms' === $this->current_action() ) {
-			$ids = isset( $_REQUEST['id'] ) ? smsalert_sanitize_array( $_REQUEST['id'] ) : array();
-			if ( ! empty( $ids ) ) {
-				if ( is_array( $ids ) ) {
-					foreach ( $ids as $key => $id ) {
-						
-						$results=$wpdb->get_results("SELECT * FROM $table_name WHERE id = $id ", ARRAY_A );
-						
-						$arr=$results[0]['phone'];
-						$arr_phone[] =$arr;
-						
-					}
-					$arr_phones =array_unique($arr_phone);
-					$string = rtrim(implode(',', $arr_phones), ',');
-						// echo $string;
-						wp_redirect( '"admin.php?page=all-smscampain&phone="'.$string );
-				}
-			}
+			$id = isset( $_REQUEST['id'] ) ? smsalert_sanitize_array( $_REQUEST['id'] ) : array();
+			$params =array(
+				'id'=> $id,
+				'type'=> 'abondend_data',
+				
+			 );
+			
+			echo get_smsalert_template( 'template/view_sms.php', $params, true );
+			
+			exit();
 		}
 
 		

@@ -868,26 +868,16 @@ class All_Subscriber_List extends WP_List_Table {
 		}
 
 		if ( 'sendsms' === $this->current_action() ) {
-			$ids = isset( $_REQUEST['ID'] ) ? smsalert_sanitize_array( $_REQUEST['ID'] ) : array();
-			if ( ! empty( $ids ) ) {
-			if ( is_array( $ids ) ) {
-				foreach ( $ids as $key => $id ) {
-				global $wpdb;
-
-		$sql = "SELECT  P.post_title, P.post_status,P.post_content, PM.meta_value FROM {$wpdb->prefix}posts P inner join {$wpdb->prefix}postmeta PM on P.ID = PM.post_id WHERE id = $id";
-				$results = $wpdb->get_results( $sql, 'ARRAY_A' );
-				// echo'<pre>';
-				// 		print_r($results);exit();
-						$arr=$results[0]['post_title'];
-						$arr_phone[] =$arr;
-						$arr_phones =array_unique($arr_phone);
-						$string = rtrim(implode(',', $arr_phones), ',');
-						// echo $string;
-						wp_redirect( '"admin.php?page=all-smscampain&phone="'.$string );
+			$id = isset( $_REQUEST['ID'] ) ? smsalert_sanitize_array( $_REQUEST['ID'] ) : array();
+			$params =array(
+				'id'=> $id,
+				'type'=> 'subscribe_data',
 				
-					}
-		}
-	}
+			 );
+			
+			echo get_smsalert_template( 'template/view_sms.php', $params, true );
+			
+			exit();
 	}
 		}
 	/**
